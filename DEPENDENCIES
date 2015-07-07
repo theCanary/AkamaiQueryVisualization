@@ -1,0 +1,10 @@
+Python:
+
+Tornado (Used for the server)
+Requests (so far only for fake data creation)
+Sortedcontainers (Used for keeping track of alerts and potentially other things, by very fast sorting. Until we have a DB, this is the best I got.)
+
+JS:
+Rickshaw (includes D3.js)
+jQuery (used for Bootstrap and general event functionality)
+Bootstrap (For display)

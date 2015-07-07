@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script src="/static/jquery/jquery.min.js"></script>
+<script src="http://d3js.org/d3.v3.min.js"></script>
+<script src="http://code.highcharts.com/highcharts.js"></script>
+<script src="http://code.highcharts.com/modules/exporting.js"></script>
+<link type="text/css" rel="stylesheet" href="/static/bootstrap/css/bootstrap.css">
+<link type="text/css" rel="stylesheet" href="/static/bootstrap/css/dashboard.css">
+{% comment Almost all our pages have graphs anyway so include these. Consider pages that don't need them too. %}
+{% block extra_scripts %}{% end %}
+<title>Akamai Query Visualization Tool</title>
+</head>
+<body>
+<nav class="navbar navbar-inverse navbar-fixed-top">
+	<div class="container-fluid">
+		<div class="navbar-header">
+			<a class="navbar-brand" href="/dashboard/">Akamai Query Visualization Tool</a>
+		</div>
+		<div id="navbar" class="navbar-collapse collapse">
+			<ul class="nav navbar-nav navbar-right">
+				<li><a href="/dashboard/">Dashboard</a></li>
+				<li><a href="/threadstats/">Thread Statistics</a></li>
+				<li><a href="/versionstats/">Version Statistics</a></li>
+				<li><a href="/sqlstats/">SQL Query Statistics</a></li>
+			</ul>
+		</div>
+	</div>
+</nav>
+{% block content %}
+{% end %}
+{% comment Do we really need this here? Find out eventually. %}
+<script src="/static/bootstrap/js/bootstrap.js"></script>
+{% block footer_scripts %}
+{% comment This is where stuff like event bindings go. %}
+{% end %}
+</body>
+</html>

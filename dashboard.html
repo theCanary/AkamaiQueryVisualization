@@ -1,0 +1,73 @@
+{% extends "baseTemplate.html" %}
+{% block extra_scripts %}
+<script src="/static/lighthouse/js/alerts.js"></script>
+{% end %}
+{% block content %}
+
+<div class="container-fluid">
+	<div class="row">
+		<div class="col-sm-7 col-md-7 main chart_container main_chart_container" width ="100%">
+		{% comment Here goes the main graph (main feed) %}
+			<h1 class="page-header">Network Total Table Size Over Time</h1>
+			<p>This data is pulled from the <a href = 'https://docs.akamai.com/syscomm/query/internal/design/DDC-parser-query/LogFeatureMapping.html'> DEC pipeline</a>, which logs information from every table decoded from every connection to the aggregator providing table data. </p>
+			<div id="feed_main_chart"  style="min-width: 310px; height: 400px; margin: 0 auto; overflow: scroll;"></div>
+			<p font size="5"><span id = "queryStatement"> The select statement goes here: </span></p>
+			<!-- SELECT time, sum(numrows) from dec WHERE cast(from_unixtime(unix_timestamp(time, 'yyyy/MM/dd:HH:mm:ss')) as timestamp) between cast(from_unixtime(unix_timestamp('2015-06-05 14:14', 'yyyy-MM-dd HH:mm')) as timestamp) and cast(from_unixtime(unix_timestamp('2015-07-02 14:14', 'yyyy-MM-dd HH:mm')) as timestamp) GROUP BY time ORDER BY cast(from_unixtime(unix_timestamp(time, 'yyyy/MM/dd:HH:mm:ss')) as timestamp) -->
+		</div>
+		<div class="col-sm-5 col-md-5 main">
+			<h1>Query Settings</h1>
+			<p>Type in the Network and Domain boxes to narrow down the list of possible aggsets, and select the field you want to limit your query by. To limit by table or IP Address, type the full name or a partial name followed by a * in the text field. </p>
+			<p>Queries may take over 30 seconds to render, so please be patient!</p>
+			<p>
+			  <div id="option_inputs" column-count:"3">
+			    <form id = "span" style = "position: relative; float: left; width: 33%;">
+			        <p><input type="text" id="nrwr" placeholder = "Network" size="12"></p>
+			        <p>
+			            <span id="spanMatches"></span><br>
+			            <select id="spanNames" multiple size="5"></select>
+			        </p>
+			    </form>
+			  	<form id = "domain" style = "position: relative; float: left; width: 33%;">
+			        <p><input type="text" id="nrwr2" placeholder = "Domain" size="12"></p>
+			        <p>
+			            <span id="domainMatches"></span><br>
+			            <select id="domainNames" multiple size="5"></select>
+			        </p>
+			    </form>
+			    <form id = "thread" style = "position: relative; float: left; width: 33%;">
+			  		<p><input type="text" id="nrwr3" placeholder = "Thread" size="12"></p>
+			        <p>
+			            <span id="threadMatches"></span><br>
+			            <select id="threadNames" multiple size="5"></select>
+			        </p>
+			    </form>
+			  	<!-- <form id = "other" style = "position: relative; float: left; width: 33%;">
+			    </form> -->
+			  </div>
+			</p>
+			<div id = "other"> </div>
+			<div id="button_div"> </div>
+		</div>
+	</div>
+	{%comment Now for a second row, this is where all the smaller graphs live %} 
+	{%comment The naming convention for classes is a bit confounding, but i will clarify it here. chart_container is for setting width/height of any container element %}
+	{%comment The second chunk, main_ sub_x_ is to determine what feed to put in what place. It's a little hokey, but it's certainly fast and it's easy to look up %} 
+	{%comment Which chart goes where. Also, I wish Tornado had multi-line comments! %}
+	<!-- <div class="row">
+		{% for feed_index in [1,2,3] %}
+			<div class="col-sm-4 col-md-4 main chart_container sub_{{feed_index}}_chart_container">
+				<h3 class="page-header">Feed {{feed_index}}</h3>
+				<p class="remove_on_data">There is no data to display at this time.</p>
+				<div class="y_axis" id="feed_{{feed_index}}_y_axis"></div>
+				<div class="chart" id="feed_{{feed_index}}_chart" float="left"></div>
+			</div>
+		{% end %}
+	</div> -->
+</div>
+{% end %}
+{% block footer_scripts %}
+<script src="/static/query/dec.js"></script>
+<script src="/static/lighthouse/js/network.js"></script>
+{% comment This makes the page load faster. Faster loading is good. %}
+	<script src="/static/lighthouse/js/misc.js"></script>
+{% end %}

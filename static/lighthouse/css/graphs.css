@@ -1,0 +1,26 @@
+.separate_buttons {
+	margin-top: 10px;
+}
+
+/* (Most of) the below rules are from Rickshaw example code: http://code.shutterstock.com/rickshaw/tutorial/introduction.html */
+.rickshaw_graph .detail .x_label { display: none } /* x ticks are distracting - we use tooltips instead */
+.rickshaw_graph .detail .item { line-height: 1.4; padding: 0.5 em}
+.rickshaw_graph .detail .date { color: #a0a0a0 } /* Dates should be slightly greyed out */
+
+.chart_container {
+	position: relative,
+	font-family: Arial, Helvetica, sans-serif;
+}
+
+.chart svg {
+	position: relative;
+}
+
+.chart {
+	position: relative;
+}
+
+.y_axis {
+	position:relative;
+	float:left;
+}

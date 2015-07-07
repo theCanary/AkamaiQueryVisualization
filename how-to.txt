@@ -1,0 +1,135 @@
+/************************************************************
+How to add a new data visualization page for a new pipeline:
+************************************************************/
+
+Before you do anything you need:
+	1) All the previous QueryVisualization code (in QueryVisualization.zip or on root@198.18.55.216:/home/awang/QueryVisualization)
+	2) Add a new folder to the HDFS /ghostcache/<tag> where <tag> is the name of the pipeline (ex: DEC, VER, TST)
+	3) Add all the files in to the folder. (In general they should be space separated, or else you have to edit the table generating code)
+	4) Generate the table in Impala in 198.18.55.221 with the following format:
+		DROP TABLE IF EXISTS mrg;
+		CREATE EXTERNAL TABLE mrg
+		(
+		        ddc INT,
+		        time STRING,
+		        name STRING,
+		        table_name STRING,
+		        ip STRING,
+		        span STRING,
+		        domain STRING,
+		        numrows INT,
+		        numcolumns INT
+		)
+		ROW FORMAT DELIMITED FIELDS TERMINATED BY ' '
+		LOCATION '/ghostcache/mrg/';
+
+In tornadoserver.py 
+1) Add Handler link
+		"url(r"/versionstats/",VERHandler)"
+
+2) Add Handler Class
+		class VERHandler(RequestHandler):
+			def get(self):
+				self.render("versionstats.html")
+
+In new .html page
+3) Make .html page based off of baseTemplate.html
+		- change page-header, description, etc
+		- change scripts to the new js file:  <script src="/static/query/ver.js"></script>
+
+In new .js file
+4) Make .js file to populate the .html page (This is the hardest part - you have to think about what's actually interesting)
+		- If necessary, copy over Network, Domain, and Thread selectors
+		- Add other buttons/selectors if necessary
+		- In query_submit and query_submit_add, figure out the arguments to be passed in **
+		- Change Highcharts initialization
+
+In baseTemplate.html
+5) Add the complete url to the navbar list
+		<li><a href="/threadstats/">Thread Statistics</a></li>
+
+In tornadoserver.py
+6) Add conditional for new pipeline in QueryHandler code
+		elif table == 'ver':
+			** read in the arguments passed in from query_submit and query_submit_add
+
+7) Add function to generate an SQL command from these arguments, and execute the command by connecting to Impala
+		- MAKE SURE that the arguments also contain 'self', because the function is also under the get() function
+				
+
+
+
+
+
+
+
+
+
+
+
+
+/************************************************************
+How to allow asynchronous queries in the web server:
+************************************************************/
+
+In tornadoserver.py
+1) from tornado import gen
+2) from concurrent.futures import ThreadPoolExecutor
+3) Copy the following piece of code:
+
+				"""
+				Queries Impala asynchronously, making it possible to have more than 1 concurrent user.
+				This is executed as a function decorator on a RequestHandler's get/post, which allows us
+				to simply execute our synchronous code as an asynchronous process that takes full advantage
+				of Tornado's event loop capabilities.
+				Code thanks to Sschalk
+				"""
+				def query_database(use_thread=False):
+					def query_wrapper(function_to_wrap):
+						def wrapper(self,*args,**kwargs):
+							try:
+								if use_thread:
+									future = self.executor.submit(exception_catcher,function_to_wrap,self,*args,**kwargs)
+									try:
+										content = yield future
+									except Exception:
+										self.set_status(500)
+										self.write("Problem in Nested exception! Writing to request and to error logs...\n")
+										trace = traceback.format_exc()
+										self.write(trace)
+										self.write("Nested exception was:\n")
+										msg = future.exception().message
+										self.write(msg+"\n")
+								else:
+									content = function_to_wrap(self,*args,**kwargs) #WARNING: This is synchronous!
+								self.finish()
+							except Exception as e:
+								self.set_status(500)
+								self.finish("Database error:\n " + str(e))
+								return
+						return gen.coroutine(wrapper)
+					return query_wrapper
+
+4) Create an exception catcher:
+
+				"""
+				Catches exeptions in a decorator wrapper.
+				"""
+				def exception_catcher(func,self,*args,**kwargs):
+					try:
+						return func(self,*args,**kwargs)
+					except:
+						ex = traceback.print_exc() #TODO: Do something more appropriate with this
+
+
+5) Create a superclass to all Handlers that allows for extra workers
+				"""
+				Handler that carries any variables we want to toss in multiple templates at once.
+				"""
+				class BaseQuery2Handler(RequestHandler):
+					executor = ThreadPoolExecutor(max_workers=50) #this pool is shared between all requesthandlers. TODO: make max_workers a parameter
+
+6) Make this the superclass to all handlers
+
+7) Add in front of the method that you want to make asynchronous:
+				@query_database(use_thread=True)
