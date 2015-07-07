@@ -417,7 +417,7 @@ def make_application():
 		url(r"/threadstats/",TSTHandler),
 		url(r"/versionstats/",VERHandler),
 		url(r"/sqlstats/",SQLHandler),
-		url(r"/ImpalaQueries",ImpalaQueryHandler)
+		url(r"/ImpalaQueries",ImpalaQueryHandler),
 		url(r"/_make_query",QueryHandler),
 		url(r"/_make_sql_query",SQLQueryHandler)
 		]
