@@ -8,11 +8,9 @@
 	<div class="row">
 		<div class="col-sm-7 col-md-7 main chart_container main_chart_container" width ="100%">
 		{% comment Here goes the main graph (main feed) %}
-			<h1 class="page-header">Network Total Table Size Over Time</h1>
+			<h1 class="page-header">Table Size Over Time</h1>
 			<p>This data is pulled from the <a href = 'https://docs.akamai.com/syscomm/query/internal/design/DDC-parser-query/LogFeatureMapping.html'> DEC pipeline</a>, which logs information from every table decoded from every connection to the aggregator providing table data. </p>
 			<div id="feed_main_chart"  style="min-width: 310px; height: 400px; margin: 0 auto; overflow: scroll;"></div>
-			<p font size="5"><span id = "queryStatement"> The select statement goes here: </span></p>
-			<!-- SELECT time, sum(numrows) from dec WHERE cast(from_unixtime(unix_timestamp(time, 'yyyy/MM/dd:HH:mm:ss')) as timestamp) between cast(from_unixtime(unix_timestamp('2015-06-05 14:14', 'yyyy-MM-dd HH:mm')) as timestamp) and cast(from_unixtime(unix_timestamp('2015-07-02 14:14', 'yyyy-MM-dd HH:mm')) as timestamp) GROUP BY time ORDER BY cast(from_unixtime(unix_timestamp(time, 'yyyy/MM/dd:HH:mm:ss')) as timestamp) -->
 		</div>
 		<div class="col-sm-5 col-md-5 main">
 			<h1>Query Settings</h1>
@@ -45,24 +43,22 @@
 			    </form> -->
 			  </div>
 			</p>
-			<div id = "other"> </div>
-			<div id="button_div"> </div>
+			<div id = "other" class = "col-sm-6 col-md-6" > </div>
+			<div id="button_div" class = "col-sm-6 col-md-6" > </div>
 		</div>
 	</div>
 	{%comment Now for a second row, this is where all the smaller graphs live %} 
 	{%comment The naming convention for classes is a bit confounding, but i will clarify it here. chart_container is for setting width/height of any container element %}
 	{%comment The second chunk, main_ sub_x_ is to determine what feed to put in what place. It's a little hokey, but it's certainly fast and it's easy to look up %} 
 	{%comment Which chart goes where. Also, I wish Tornado had multi-line comments! %}
-	<!-- <div class="row">
+	<div class="row">
 		{% for feed_index in [1,2,3] %}
 			<div class="col-sm-4 col-md-4 main chart_container sub_{{feed_index}}_chart_container">
-				<h3 class="page-header">Feed {{feed_index}}</h3>
-				<p class="remove_on_data">There is no data to display at this time.</p>
-				<div class="y_axis" id="feed_{{feed_index}}_y_axis"></div>
+				<h3 class="page-header"></h3>
 				<div class="chart" id="feed_{{feed_index}}_chart" float="left"></div>
 			</div>
 		{% end %}
-	</div> -->
+	</div>
 </div>
 {% end %}
 {% block footer_scripts %}

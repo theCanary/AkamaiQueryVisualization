@@ -132,7 +132,7 @@ $(function () {
     var newDate = new Date();
     var datetime = newDate.today() + newDate.timeNow();
     $("#endDate").val(datetime)
-    var prevDate = new Date(new Date(datetime) - (60*60*24*365*4*1000)).toJSON().substring(0,16) //edit the string to make it the right format
+    var prevDate = new Date(new Date(datetime) - (60*60*24*30*4*1000)).toJSON().substring(0,16) //edit the string to make it the right format
     $("#startDate").val(prevDate);
 
 
@@ -167,6 +167,42 @@ function generate_chart() {
                   enabled: true,
                   style: { fontWeight: 'bold', color: (Highcharts.theme && Highcharts.theme.textColor) || 'gray' }
               }
+    },
+    exporting: {
+        buttons: {
+            contextButton: {
+                menuItems: [{
+                    text: 'Print Chart',
+                    onclick: function () {
+                        this.exportChart();
+                    },
+                    separator: false
+                },
+                {
+                    text: 'Export to PNG',
+                    onclick: function () {
+                        this.exportChart();
+                    },
+                    separator: false
+                },
+                {separator: true},
+                {text: 'Graph as Area Chart',
+                onclick: function () {
+                    a = $('#feed_main_chart').highcharts();
+                    for (i = 0; i < a.series.length; i++) {a.series[i].update({type: 'area'})};
+                }},
+                {text: 'Graph as Line Chart',
+                onclick: function () {
+                    a = $('#feed_main_chart').highcharts();
+                    for (i = 0; i < a.series.length; i++) {a.series[i].update({type: 'line'})};
+                }},
+                {text: 'Graph as Bar Chart',
+                onclick: function () {
+                    a = $('#feed_main_chart').highcharts();
+                    for (i = 0; i < a.series.length; i++) {a.series[i].update({type: 'bar'})};
+                }}]
+            }
+        }
     },
     legend: {
         align: 'right',
@@ -219,27 +255,7 @@ function generate_chart() {
 var initial_main_feed = generate_chart();
 
 $(function () {
-
-  // Add menu options to change the graph to different types dynamically
-  Highcharts.getOptions().exporting.buttons.contextButton.menuItems.push({separator: true},
-    {text: 'area',
-    onclick: function () {
-        a = $('#feed_main_chart').highcharts();
-        for (i = 0; i < a.series.length; i++) {a.series[i].update({type: 'area'})};
-    }},
-    {text: 'line',
-    onclick: function () {
-        a = $('#feed_main_chart').highcharts();
-        for (i = 0; i < a.series.length; i++) {a.series[i].update({type: 'line'})};
-    }},
-    {text: 'bar',
-    onclick: function () {
-        a = $('#feed_main_chart').highcharts();
-        for (i = 0; i < a.series.length; i++) {a.series[i].update({type: 'bar'})};
-    }}
-  );
-
-  //Add buttons
+  //Draw the chart
   $('#feed_main_chart').highcharts(initial_main_feed);
 })
 
@@ -284,7 +300,7 @@ var submit_query = function(e) {
         var chart = new Highcharts.Chart(response);
         chart.title.attr({text: 'Thread' + $('#option').val() + " over Time"});
         chart.yAxis[0].axisTitle.attr({text: $('#option').val()});
-        $('#queryStatement').text(data.query);
+        $('#feed_main_chart').prop('title', data.query);
   });
   return false;
 };
@@ -316,7 +332,7 @@ var submit_query_add = function(e) {
     var chart = new Highcharts.Chart(response);
     chart.yAxis[0].axisTitle.attr({text: $('#option').val()});
     chart.title.attr({text: 'Thread' + $('#option').val() + " over Time"});
-    $('#queryStatement').text(data.query);
+    $('#feed_main_chart').prop('title', data.query);
   });
   return false;
 };

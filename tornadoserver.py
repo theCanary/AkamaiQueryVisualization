@@ -6,14 +6,16 @@ from tornado.ioloop import IOLoop
 from tornado.web import RequestHandler, Application, url, StaticFileHandler
 from tornado.websocket import WebSocketHandler, WebSocketClosedError
 from tornado import gen
+from impala.dbapi import connect
+from impala.util import as_pandas
 import json
 import os
 import random
 import requests
 import datetime
+import html # from ashwang, should be files in same directory
+import query # from ashwang, should be files in same directory
 import sortedcontainers #for fake data. TODO: remove when we have a real DB!
-from impala.dbapi import connect
-from impala.util import as_pandas
 from flask import Flask, jsonify, json, render_template, request
 from concurrent.futures import ThreadPoolExecutor
 
@@ -38,6 +40,13 @@ class BaseQuery2Handler(RequestHandler):
 	executor = ThreadPoolExecutor(max_workers=50) #this pool is shared between all requesthandlers. TODO: make max_workers a parameter
 
 """
+Home page, describes what's going on.
+"""
+class HomeHandler(BaseQuery2Handler):
+	def get(self):
+		self.render("index.html")
+
+"""
 Renders DEC information.
 """
 class DashboardHandler(BaseQuery2Handler):
@@ -57,11 +66,18 @@ class VERHandler(BaseQuery2Handler):
 		self.render("versionstats.html")
 
 """
-Renders SQL information.
+Renders SQL and GOT information.
 """
 class SQLHandler(BaseQuery2Handler):
 	def get(self):
 		self.render("sqlstats.html")
+
+"""
+Renders MRG information.
+"""
+class MRGHandler(RequestHandler):
+	def get(self):
+		self.render("mergestats.html")
 
 """
 Renders Impala Query box.
@@ -114,25 +130,48 @@ def query_database(use_thread=False):
 		return gen.coroutine(wrapper)
 	return query_wrapper
 
+"""
+Table Generator!!! 
+This should take in a SQL Query (with or without the ;) with ONLY TWO columns selected and return html code for 
+an html table.
+"""
+class TableGeneratorHandler(BaseQuery2Handler):
+	@query_database(use_thread=True)
+	def get(self):
+	    conn = connect(host = host_machine_ip_address, port=21050)
+	    cur = conn.cursor()
+	    command = self.get_argument('query')
+	    cur.execute(command.encode('ascii','ignore').replace(";", ""))
+	    data = cur.fetchall()
+	    print data
+	    tempDict = {}
+	    for x in data:
+	    	tempDict[x[0]] = x[1]
+
+	    code = html.prettyTable(tempDict)
+	    json_data = {"data": data, "code": code, "query": command}
+	    self.write(json_data)
+
+	def post(self):
+		pass
+
 
 """
 SQL QUERIES!!! 
-This should take in a fully formed SQL Query (with the ; as well) and return a list of tuples 
+This should take in a fully formed SQL Query (with the ; as well, or not, it don't matter) and return an array or text 
 that can be graphed or presented as a table.
 """
 class SQLQueryHandler(BaseQuery2Handler):
 	@query_database(use_thread=True)
 	def get(self):
-	    print "Got here"
 	    conn = connect(host = host_machine_ip_address, port=21050)
 	    cur = conn.cursor()
 	    command = self.get_argument('query')
-	    print command, type(command), type(command.encode('ascii','ignore'))
 	    cur.execute(command.encode('ascii','ignore').replace(";", ""))
-	    # cur.execute("show tables")
-	    timeline = cur.fetchall()
-	    print timeline
-	    json_data = {"data": timeline, "query": command}
+	    data = cur.fetchall()
+	    print data
+	    code = html.prettyDatabase(data)
+	    json_data = {"data": data, "code": code, "query": command}
 	    self.write(json_data)
 
 	def post(self):
@@ -151,6 +190,7 @@ class QueryHandler(BaseQuery2Handler):
 	    cur = conn.cursor()
 
 	    table = self.get_argument('table')
+	    print table
 
 	    if table == 'dec': # Set in dec.js
 		    # span = 'freeflow'
@@ -167,7 +207,7 @@ class QueryHandler(BaseQuery2Handler):
 		    ipAddress = self.get_argument('e')
 		    startDate = self.get_argument('f')
 		    endDate = self.get_argument('g')
-		    json_data = self.dec(cur, span, domain, threadName, tableName, ipAddress, startDate, endDate)
+		    json_data = query.dec(cur, span, domain, threadName, tableName, ipAddress, startDate, endDate)
 	    # elif table == 'tst_CPU_RSS': # Set in tst.js
 		   #  span = self.get_argument('a')
 		   #  domain = self.get_argument('b')
@@ -181,7 +221,7 @@ class QueryHandler(BaseQuery2Handler):
 		    startDate = self.get_argument('d')
 		    endDate = self.get_argument('e')
 		    option = self.get_argument('option')
-		    json_data = self.tst(cur, span, domain, thread, startDate, endDate, option)
+		    json_data = query.tst(cur, span, domain, thread, startDate, endDate, option)
 	    elif table == 'ver': # Set in ver.js
 		    span = self.get_argument('a')
 		    domain = self.get_argument('b')
@@ -191,7 +231,7 @@ class QueryHandler(BaseQuery2Handler):
 		    build = self.get_argument('f')
 		    startDate = self.get_argument('g')
 		    endDate = self.get_argument('h')
-		    json_data = self.ver(cur, span, domain, multithreaded, ipAddress, aggtype, build, startDate, endDate)
+		    json_data = query.ver(cur, span, domain, multithreaded, ipAddress, aggtype, build, startDate, endDate)
 	    elif table == 'sql': # Set in sql.js
 		    span = self.get_argument('a')
 		    domain = self.get_argument('b')
@@ -200,168 +240,30 @@ class QueryHandler(BaseQuery2Handler):
 		    startDate = self.get_argument('e')
 		    endDate = self.get_argument('f')
 		    option = self.get_argument('option')
-		    json_data = self.sql(cur, span, domain, host, client, startDate, endDate, option)
+		    json_data = query.sql(cur, span, domain, host, client, startDate, endDate, option)
+	    elif table == 'got': # Set in sql.js as well since GOT is so similar to SQL
+		    span = self.get_argument('a')
+		    domain = self.get_argument('b')
+		    host = self.get_argument('c')
+		    client = self.get_argument('d')
+		    table = self.get_argument('e')
+		    startDate = self.get_argument('f')
+		    endDate = self.get_argument('g')
+		    json_data = query.got(cur, span, domain, host, client, table, startDate, endDate)
+	    elif table == 'mrg': # Set in mrg.js
+		    span = self.get_argument('a')
+		    domain = self.get_argument('b')
+		    tableName = self.get_argument('c')
+		    startDate = self.get_argument('d')
+		    endDate = self.get_argument('e')
+		    option = self.get_argument('option')
+		    json_data = query.mrg(cur, span, domain, tableName, startDate, endDate, option)
 
 	    self.write(json_data)
 
 	def post(self):
 	    pass
 
-	def dec(self, cur, span, domain, thread, tableName, ipAddress, startDate, endDate):
-
-	    command = "SELECT time, sum(numrows) from dec"
-	    name = ""
-	    command += " WHERE "
-	    if span != "ALL":
-	    	name += span + "."
-	        command += "span = '" + span + "' and "
-	    if domain != "ALL":
-	    	name += domain + " "
-	        command += "domain = '" + domain + "' and "
-	    if thread != "ALL":
-	    	name += thread + " "
-	    	command += "name LIKE '%" + thread + "%' and "
-	    if tableName != "":
-	    	name += tableName + " "
-	        command += "table_name = '" + tableName + "' and "
-	    if ipAddress != "":
-	    	name += ipAddress + " "
-	        command += "ip LIKE '" + ipAddress.replace('*', '%') + "' and "
-	    command += "cast(from_unixtime(unix_timestamp(time, 'yyyy/MM/dd:HH:mm:ss')) as timestamp) between cast(from_unixtime(unix_timestamp('" + startDate + "', 'yyyy-MM-dd HH:mm')) as timestamp) and cast(from_unixtime(unix_timestamp('" + endDate + "', 'yyyy-MM-dd HH:mm')) as timestamp) "
-	    command += "GROUP BY time ORDER BY cast(from_unixtime(unix_timestamp(time, 'yyyy/MM/dd:HH:mm:ss')) as timestamp)"
-	    print command
-
-	    cur.execute(command)
-	    timeline = cur.fetchall()
-	    timeline = [[((datetime.datetime.strptime(i[0], '%Y/%m/%d:%H:%M:%S'))-datetime.datetime(1970,1,1)).total_seconds()*1000, i[1]] for i in timeline];
-	    print timeline
-	    json_data = {"data": timeline, "query": command, "name": name}
-	    return json_data
-
-	# def tst_CPU_RSS(self, cur, span, domain, startDate, endDate):
-	#     print span, domain, startDate, endDate
-	#     json_data = {}
-
-	#     for x in ["decoder", "encoder", "comm", "merger", "gcollect", "sql", "listener", "main"]:
-	#     	command  = "select time, avg(cpu), avg(rss), count(distinct span, domain) from tst WHERE name LIKE '%" + x + "%' and time LIKE '%2015%' GROUP BY time ORDER BY cast(from_unixtime(unix_timestamp(time, 'yyyy/MM/dd:HH:mm:ss')) as timestamp)"
-	#     	print command
-
-	#     	cur.execute(command)
-	#     	timeline = cur.fetchall()
-	#     	cpuTime = [[((datetime.datetime.strptime(i[0], '%Y/%m/%d:%H:%M:%S'))-datetime.datetime(1970,1,1)).total_seconds()*1000, i[1]] for i in timeline]
-	#     	rssMemory = [[((datetime.datetime.strptime(i[0], '%Y/%m/%d:%H:%M:%S'))-datetime.datetime(1970,1,1)).total_seconds()*1000, i[2]] for i in timeline]
-	#     	numAggsets = [[((datetime.datetime.strptime(i[0], '%Y/%m/%d:%H:%M:%S'))-datetime.datetime(1970,1,1)).total_seconds()*1000, i[3]] for i in timeline];
-
-	#     	json_data[x] = {"name" : x, "color": x, "CPU_Time": cpuTime, "numSources": numAggsets, "RSS_Memory": rssMemory}
-	#     print json_data
-	#     return json_data
-
-	def tst(self, cur, span, domain, thread, startDate, endDate, numOption):
-	    
-	    tags = [("(Minor)", "(Major)"), ("(Voluntary)", "(Involuntary)"), ("(Input)", "(Output)"), "CPU Time", "RSS Memory"]
-	    options = ["sum(minorpf), sum(majorpf)", "sum(vcs), sum(ics)", "sum(input), sum(output)", "avg(cpu)", "avg(rss)"]
-	    selection = options[int(numOption)]
-	    tag = tags[int(numOption)]
-
-	    command = "SELECT time, " + selection + " from tst"
-	    name = ""
-	    command += " WHERE "
-	    if span != "ALL":
-	    	name += span + "."
-	        command += "span = '" + span + "' and "
-	    if domain != "ALL":
-	    	name += domain + " "
-	        command += "domain = '" + domain + "' and "
-	    if thread != "ALL":
-	    	name += thread
-	        command += "name LIKE '%" + thread + "%' and "
-	    command += "cast(from_unixtime(unix_timestamp(time, 'yyyy/MM/dd:HH:mm:ss')) as timestamp) between cast(from_unixtime(unix_timestamp('" + startDate + "', 'yyyy-MM-dd HH:mm')) as timestamp) and cast(from_unixtime(unix_timestamp('" + endDate + "', 'yyyy-MM-dd HH:mm')) as timestamp) "
-	    command += "GROUP BY time ORDER BY cast(from_unixtime(unix_timestamp(time, 'yyyy/MM/dd:HH:mm:ss')) as timestamp)"
-	    print command
-
-	    cur.execute(command)
-	    timeline = cur.fetchall()
-
-	    if int(numOption) < 3:
-		    data1 = [[((datetime.datetime.strptime(i[0], '%Y/%m/%d:%H:%M:%S'))-datetime.datetime(1970,1,1)).total_seconds()*1000, i[1]] for i in timeline];
-		    data2 = [[((datetime.datetime.strptime(i[0], '%Y/%m/%d:%H:%M:%S'))-datetime.datetime(1970,1,1)).total_seconds()*1000, i[2]] for i in timeline];
-		    print data1, data2
-		    json_data = {"name1": name + " " + tag[0], "data1": data1, "name2": name + " " +  tag[1], "data2": data2, "query": command}
-	    else:
-		    data = [[((datetime.datetime.strptime(i[0], '%Y/%m/%d:%H:%M:%S'))-datetime.datetime(1970,1,1)).total_seconds()*1000, i[1]] for i in timeline];
-		    print data
-		    json_data = {"name": name, "data": data, "query": command}
-		
-	    return json_data
-
-	def ver(self, cur, span, domain, multithreaded, ipAddress, aggtype, build, startDate, endDate):
-	    command = "SELECT CONCAT(substr(starttime,1, 10), ':', substr(starttime,14, 8)), generation from ver"
-	    name = ""
-	    command += " WHERE "
-	    if span != "ALL":
-	    	name += span + "."
-	        command += "span = '" + span + "' and "
-	    if domain != "ALL":
-	    	name += domain + " "
-	        command += "domain = '" + domain + "' and "
-	    if ipAddress != "":
-	    	name += ipAddress + " "
-	        command += "ip LIKE '" + ipAddress.replace('*', '%') + "' and "
-	    if aggtype != "ALL":
-	    	name += aggtype + " "
-	        command += "aggtype = '" + aggtype + "' and "
-	    if build != "ALL":
-	    	name += build + " "
-	        command += "ver = '" + build + "' and "
-	    command += "cast(from_unixtime(unix_timestamp(substr(starttime,1, 10), 'yyyy-MM-dd')) as timestamp) between cast(from_unixtime(unix_timestamp('" + startDate + "', 'yyyy-MM-dd HH:mm')) as timestamp) and cast(from_unixtime(unix_timestamp('" + endDate + "', 'yyyy-MM-dd HH:mm')) as timestamp) "
-	    # command += "GROUP BY starttime"
-	     # ORDER BY cast(from_unixtime(substr(starttime,1, 10), 'yyyy-MM-dd') as timestamp)"
-	    print command
-
-	    cur.execute(command)
-	    timeline = cur.fetchall()
-	    data = [[((datetime.datetime.strptime(i[0], '%Y-%m-%d:%H:%M:%S'))-datetime.datetime(1970,1,1)).total_seconds()*1000, i[1]] for i in timeline];
-	    print data
-	    json_data = {"name": name, "data": data, "query": command}
-
-	    return json_data
-
-
-	def sql(self, cur, span, domain, host, client, startDate, endDate, numOption):
-	    print "ok"
-
-	    ["Returned Rows", "Total Generated Rows", "Query Processing Time", "Total Elapsed Time", "Number of Interrupts", "Number of Error Messages", "Number of Distinct Error Messages", "Total Table Bytes", "Total Temp Table Bytes", "Total Table Indices", "Total Temp Table Indices"]
-	    options = ["sum(rows)", "sum(total_rows)", "avg(timetoprocess_ms)", "avg(elapsed_ms)", "sum(interrupts)", "count(error_msg)", "count(distinct error_msg)", "sum(table_index_bytes)", "sum(temp_index_bytes)", "sum(num_table_indexes)", "sum(num_temp_indexes)"]
-	    selection = options[int(numOption)]
-
-	    command = "SELECT time, " + selection + " from sql"
-	    name = ""
-	    command += " WHERE "
-	    if span != "ALL":
-	    	name += span + "."
-	        command += "span = '" + span + "' and "
-	    if domain != "ALL":
-	    	name += domain + " "
-	        command += "domain = '" + domain + "' and "
-	    if host != "":
-	    	name += host
-	        command += "host LIKE '%" + host + "%' and "
-	    if client != "":
-	    	name += client
-	        command += "client LIKE '%" + client + "%' and "
-	    if int(numOption) in [5,6]:
-	    	command += "table_type LIKE 'error_table' and " # should all the other queries exclude errors???
-	    command += "cast(from_unixtime(unix_timestamp(time, 'yyyy/MM/dd:HH:mm:ss')) as timestamp) between cast(from_unixtime(unix_timestamp('" + startDate + "', 'yyyy-MM-dd HH:mm')) as timestamp) and cast(from_unixtime(unix_timestamp('" + endDate + "', 'yyyy-MM-dd HH:mm')) as timestamp) "
-	    command += "GROUP BY time ORDER BY cast(from_unixtime(unix_timestamp(time, 'yyyy/MM/dd:HH:mm:ss')) as timestamp)"
-	    print command
-
-	    cur.execute(command)
-	    timeline = cur.fetchall()
-
-	    data = [[((datetime.datetime.strptime(i[0], '%Y/%m/%d:%H:%M:%S'))-datetime.datetime(1970,1,1)).total_seconds()*1000, i[1]] for i in timeline];
-	    print data
-	    json_data = {"name": name, "data": data, "query": command}
-	    return json_data
 
 """
 below code thanks to: http://blog.kagesenshi.org/2011/10/simple-websocket-push-server-using.html
@@ -412,13 +314,16 @@ Creates handlers and options for our application.
 def make_application():
 	handlers = [
 		url(r"/socket/", ClientSocket),
-		url(r"/",DashboardHandler),
+		url(r"/",HomeHandler),
+		url(r"/home/",HomeHandler), # DEC pipeline
 		url(r"/dashboard/",DashboardHandler), # DEC pipeline
 		url(r"/threadstats/",TSTHandler),
 		url(r"/versionstats/",VERHandler),
 		url(r"/sqlstats/",SQLHandler),
-		url(r"/ImpalaQueries",ImpalaQueryHandler),
+		url(r"/mergestats/",MRGHandler),
+		url(r"/ImpalaQueries/",ImpalaQueryHandler),
 		url(r"/_make_query",QueryHandler),
+		url(r"/_make_table_query",TableGeneratorHandler),
 		url(r"/_make_sql_query",SQLQueryHandler)
 		]
 	settings = {'static_path':os.getcwd() + "/static/",

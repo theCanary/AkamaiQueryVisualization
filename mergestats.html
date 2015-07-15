@@ -8,8 +8,8 @@
 	<div class="row">
 		<div class="col-sm-7 col-md-7 main chart_container main_chart_container" width ="100%">
 		{% comment Here goes the main graph (main feed) %}
-			<h1 class="page-header">SQL Statistics over Time</h1>
-			<div id = "pipelineDescriptor"> <p>This data is pulled from the <a href = 'https://docs.akamai.com/syscomm/query/internal/design/DDC-parser-query/LogFeatureMapping.html'> SQL pipeline</a>, which logs thread usage statistics for each thread. Columns such as timetoprocess_ms and elapsed_ms are averaged, while columns table_rows, table_index_bytes, temp_index_bytes, num_table_indexes, num_temp_indexes are added up.</p> </div>
+			<h1 class="page-header">Table Merges over Time</h1>
+			<div id = "pipelineDescriptor"> <p>This data is pulled from the <a href = 'https://docs.akamai.com/syscomm/query/internal/design/DDC-parser-query/LogFeatureMapping.html'> MRG pipeline</a>, which shows when a table is merged, how big it is, and how many individual contributors submitted part of the merged table.</p> </div>
 			<div id="feed_main_chart"  style="min-width: 310px; height: 400px; margin: 0 auto; overflow: scroll;"></div>
 		</div>
 		<div class="col-sm-5 col-md-5 main">
@@ -37,8 +37,7 @@
 			    </form>
 			  </div>
 			</p>
-			<div class="col-sm-6 col-md-6" id="sql_button_div"></div>
-			<div class="col-sm-6 col-md-6" id="got_button_div"></div>
+			<div class="col-sm-6 col-md-6" id="button_div"></div>
 		</div>
 	</div>
 	<div class="row">
@@ -54,7 +53,7 @@
 {% end %}
 {% block footer_scripts %}
 
-<script src="/static/query/sql.js"></script>
+<script src="/static/query/mrg.js"></script>
 <script src="/static/lighthouse/js/network.js"></script>
 {% comment This makes the page load faster. Faster loading is good. %}
 	<script src="/static/lighthouse/js/misc.js"></script>

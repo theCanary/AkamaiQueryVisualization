@@ -5,6 +5,7 @@ How to add a new data visualization page for a new pipeline:
 Before you do anything you need:
 	1) All the previous QueryVisualization code (in QueryVisualization.zip or on root@198.18.55.216:/home/awang/QueryVisualization)
 	2) Add a new folder to the HDFS /ghostcache/<tag> where <tag> is the name of the pipeline (ex: DEC, VER, TST)
+		- Ex: Check to see if it succeeded with /a/bin/hadoop dfs -ls /ghostcache/mrg/ where mrg 
 	3) Add all the files in to the folder. (In general they should be space separated, or else you have to edit the table generating code)
 	4) Generate the table in Impala in 198.18.55.221 with the following format:
 		DROP TABLE IF EXISTS mrg;
@@ -53,8 +54,10 @@ In tornadoserver.py
 		elif table == 'ver':
 			** read in the arguments passed in from query_submit and query_submit_add
 
+In query.py
 7) Add function to generate an SQL command from these arguments, and execute the command by connecting to Impala
-		- MAKE SURE that the arguments also contain 'self', because the function is also under the get() function
+		- MAKE SURE that the arguments DON'T contain 'self', because the function is NO LONGER IN THE GET() function
+		- Make sure when calling, use query.<function name> to call the function, since it's imported.
 				
 
 

@@ -97,22 +97,6 @@ Copyright (c) 2013. All Rights reserved.
   var nrwr2 = new Narrower(inp2, sel2, disp2, domainList)
   nrwr2.init()
 
-  // //same for host form
-  // var inp3  = document.querySelector('#nrwr3')
-  // var sel3  = document.querySelector('#hostNames')
-  // var disp3 = document.querySelector('#hostMatches')
-  // var threadList = ['ALL', 'decoder', 'encoder', 'comm', 'merger', 'gcollect', 'sql', 'listener', 'main', 'gcollect01', 'decoder06', 'merger04', 'sql01', 'decoder04', 'merger06', 'listener01', 'encoder01', 'merger02', 'comm02', 'decoder02', 'merger03', 'decoder01', 'main01', 'merger01', 'decoder03', 'comm01', 'encoder02', 'merger05', 'decoder05']
-  // var nrwr3 = new Narrower(inp3, sel3, disp3, threadList)
-  // nrwr3.init()
-
-  // //same for client form
-  // var inp3  = document.querySelector('#nrwr4')
-  // var sel3  = document.querySelector('#clientNames')
-  // var disp3 = document.querySelector('#clientMatches')
-  // var threadList = ['ALL', 'decoder', 'encoder', 'comm', 'merger', 'gcollect', 'sql', 'listener', 'main', 'gcollect01', 'decoder06', 'merger04', 'sql01', 'decoder04', 'merger06', 'listener01', 'encoder01', 'merger02', 'comm02', 'decoder02', 'merger03', 'decoder01', 'main01', 'merger01', 'decoder03', 'comm01', 'encoder02', 'merger05', 'decoder05']
-  // var nrwr3 = new Narrower(inp3, sel3, disp3, threadList)
-  // nrwr3.init()
-
 }(this, this.document))
 
 
@@ -123,6 +107,8 @@ $(function () {
     // Add query and time inputs
     $('<p><input type="text" id="host" placeholder = "Host name" size="12" ></p>').appendTo('#other');
     $('<p><input type="text" id="client" placeholder = "Client" size="12" ></p>').appendTo('#other');
+    $('<p>The following is only for the GOT pipeline: </p>').appendTo('#other');
+    $('<p><input type="text" id="table" placeholder = "Table" size="12" ></p>').appendTo('#other');
     $("<p><select id = 'option'><option>Returned Rows</option><option>Total Generated Rows</option>" +
       "<option>Query Processing Time</option> <option>Total Elapsed Time</option> <option>Number of Interrupts</option>" +
       "<option>Number of Error Messages</option><option>Number of Distinct Error Messages</option>" +
@@ -145,98 +131,122 @@ $(function () {
     var newDate = new Date();
     var datetime = newDate.today() + newDate.timeNow();
     $("#endDate").val(datetime)
-    var prevDate = new Date(new Date(datetime) - (60*60*24*365*4*1000)).toJSON().substring(0,16) //edit the string to make it the right format
+    var prevDate = new Date(new Date(datetime) - (60*60*24*30*4*1000)).toJSON().substring(0,16) //edit the string to make it the right format
     $("#startDate").val(prevDate);
 
 
     //Create and add buttons
-    $('<p><input type="button" id="newGraph" value = "New Graph"><br></p>').appendTo('#button_div');
-    $('<p><input type="button" id="addGraph" value = "Add Graph"><br></p>').appendTo('#button_div');
-    //experimental, delete later:
-    $('<p><input type="button" id="sqlQuery" value = "Make SQL Query"><br></p>').appendTo('#button_div');
-    $('#sqlQuery').bind('click', sqlQuery);
+    $('<p>Click these to graph query stats data from the SQL pipeline</p>').appendTo('#sql_button_div');
+    $('<p><input type="button" id="newGraph" value = "New Graph"><br></p>').appendTo('#sql_button_div');
+    $('<p><input type="button" id="addGraph" value = "Add Graph"><br></p>').appendTo('#sql_button_div');
     
+    $('<p>Click these to graph table data from the GOT pipeline</p>').appendTo('#got_button_div');
+    $('<p><input type="button" id="newGraphGOT" value = "New Graph"><br></p>').appendTo('#got_button_div');
+    $('<p><input type="button" id="addGraphGOT" value = "Add Graph"><br></p>').appendTo('#got_button_div');
+
     // If you click the buttons, functions will run
     $('#newGraph').bind('click', submit_query);
     $('#addGraph').bind('click', submit_query_add);
+    $('#newGraphGOT').bind('click', submit_query_GOT);
+    $('#addGraphGOT').bind('click', submit_query_add_GOT);
 });
 
 
 /*
 Initialize the page with graphs
 */
-var initial_main_feed = {
-  chart: {type: 'column', zoomType: 'x'},
-  title: {text: 'Number of Error Messages over Time'},
-  subtitle: {text: 'Click and drag to zoom in'},
-  xAxis: {type: 'datetime',
-      dateTimeLabelFormats: { // don't display the dummy year
-          month: '%e. %b',
-          year: '%b'
-      },
-      title: {text: 'Date'},minRange: 1
-  },
-  yAxis: { title: { text: 'Number of Error Messages'},
-      min: 0,
-      stackLabels: {
-                enabled: true,
-                style: { fontWeight: 'bold', color: (Highcharts.theme && Highcharts.theme.textColor) || 'gray' }
+function generate_chart() {
+  return {
+    chart: {type: 'column', zoomType: 'x'},
+    title: {text: 'Number of Error Messages over Time'},
+    xAxis: {type: 'datetime',
+        dateTimeLabelFormats: { // don't display the dummy year
+            month: '%e. %b',
+            year: '%b'
+        },
+        title: {text: 'Date'},minRange: 1
+    },
+    yAxis: { title: { text: 'Number of Error Messages'},
+        min: 0,
+        stackLabels: {
+                  enabled: true,
+                  style: { fontWeight: 'bold', color: (Highcharts.theme && Highcharts.theme.textColor) || 'gray' }
+              }
+    },
+    exporting: {
+        buttons: {
+            contextButton: {
+                menuItems: [{
+                    text: 'Print Chart',
+                    onclick: function () {
+                        this.exportChart();
+                    },
+                    separator: false
+                },
+                {
+                    text: 'Export to PNG',
+                    onclick: function () {
+                        this.exportChart();
+                    },
+                    separator: false
+                },
+                {separator: true},
+                {text: 'Graph as Area Chart',
+                onclick: function () {
+                    a = $('#feed_main_chart').highcharts();
+                    for (i = 0; i < a.series.length; i++) {a.series[i].update({type: 'area'})};
+                }},
+                {text: 'Graph as Line Chart',
+                onclick: function () {
+                    a = $('#feed_main_chart').highcharts();
+                    for (i = 0; i < a.series.length; i++) {a.series[i].update({type: 'line'})};
+                }},
+                {text: 'Graph as Bar Chart',
+                onclick: function () {
+                    a = $('#feed_main_chart').highcharts();
+                    for (i = 0; i < a.series.length; i++) {a.series[i].update({type: 'bar'})};
+                }}]
             }
-  },
-  legend: {
-      align: 'right',
-      x: -20,
-      y: -20,
-      verticalAlign: 'top',
-      y: 25,
-      floating: true,
-      backgroundColor: (Highcharts.theme && Highcharts.theme.background2) || 'white',
-      borderColor: '#CCC',
-      borderWidth: 1,
-      shadow: false
-  },
-  tooltip: {
-      headerFormat: '<b>{series.name}</b><br>',
-      pointFormat: '{point.x:%e - %b - %Y}: {point.y:.0f}'
-  },
-  plotOptions: {
-      spline: {
-                marker: {
-                    enabled: true
-                }
-            }
-  },
-  series: [
-      {
-          name: 'Total',
-          data: [[1435692600000.0, 1], [1435731600000.0, 1], [1435743300000.0, 2], [1435747200000.0, 1], [1435747500000.0, 3], [1435747800000.0, 3], [1435748100000.0, 1], [1435748700000.0, 1], [1435749000000.0, 3], [1435749300000.0, 8], [1435749600000.0, 5], [1435749900000.0, 9], [1435750200000.0, 13], [1435750500000.0, 13], [1435750800000.0, 10], [1435751100000.0, 15], [1435751400000.0, 14], [1435751700000.0, 15], [1435752000000.0, 9], [1435752300000.0, 9], [1435752600000.0, 13], [1435752900000.0, 13], [1435753200000.0, 13], [1435753500000.0, 10], [1435753800000.0, 11], [1435754100000.0, 11], [1435754400000.0, 14], [1435754700000.0, 6], [1435755000000.0, 16], [1435755300000.0, 15], [1435755600000.0, 23], [1435755900000.0, 13], [1435756200000.0, 14], [1435756500000.0, 11], [1435756800000.0, 15], [1435757100000.0, 8], [1435757400000.0, 14], [1435757700000.0, 27], [1435758000000.0, 8], [1435758300000.0, 11], [1435758600000.0, 10], [1435758900000.0, 12], [1435759200000.0, 12], [1435759500000.0, 11], [1435759800000.0, 21], [1435760100000.0, 14], [1435760400000.0, 7], [1435760700000.0, 8], [1435761000000.0, 14], [1435761300000.0, 16], [1435761600000.0, 10], [1435761900000.0, 10], [1435762200000.0, 8], [1435762500000.0, 17], [1435762800000.0, 10], [1435763100000.0, 8], [1435763400000.0, 4], [1435763700000.0, 11], [1435764000000.0, 7], [1435764600000.0, 6], [1435764900000.0, 3], [1435765200000.0, 1], [1435765500000.0, 2]]
-      }
-  ]
-};
+        }
+    },
+    navigator: {
+        enabled: true
+    },
+    legend: {
+        enabled: true
+    },
+    tooltip: {
+        pointFormat: '<span style="color:{series.color}">{series.name}</span>: <b>{point.y:.0f}</b><br/>',//'{point.x: %b/%e/%Y}: {point.y:.0f}'
+        valueDecimals: 0
+    },
+    plotOptions: {
+        spline: {
+                  marker: {
+                      enabled: true
+                  }
+              }
+    },
+    series: [
+        {
+            name: 'q1emulator',
+            data: [[1435603200000.0, 3780], [1435611300000.0, 12819], [1435625100000.0, 2948], [1435640400000.0, 17088], [1435665300000.0, 5836], [1435671000000.0, 17088], [1435683900000.0, 8544], [1435686300000.0, 5892], [1435686600000.0, 3777], [1435686900000.0, 4008], [1435687500000.0, 12813], [1435689000000.0, 14644], [1435690200000.0, 17084], [1435691100000.0, 12813], [1435691700000.0, 24940], [1435692600000.0, 7913], [1435693200000.0, 12813], [1435693500000.0, 3780], [1435694100000.0, 4292], [1435694400000.0, 17080], [1435694700000.0, 43515], [1435695600000.0, 54897], [1435698300000.0, 3523], [1435699200000.0, 3747], [1435699500000.0, 3747], [1435700100000.0, 12769], [1435700700000.0, 3908], [1435701000000.0, 3416], [1435701900000.0, 12813], [1435703700000.0, 5040], [1435704000000.0, 7856], [1435707900000.0, 7280], [1435708800000.0, 95432], [1435710000000.0, 17084], [1435710900000.0, 21360], [1435711800000.0, 17088], [1435713900000.0, 7126], [1435719000000.0, 20865], [1435720800000.0, 12816], [1435721400000.0, 17088], [1435721700000.0, 17088], [1435722900000.0, 3816], [1435723500000.0, 2547], [1435725000000.0, 4596], [1435725900000.0, 437708], [1435726200000.0, 16775], [1435726500000.0, 22932], [1435727100000.0, 17088], [1435728000000.0, 2520], [1435728300000.0, 5000], [1435728600000.0, 7280], [1435729500000.0, 3488], [1435729800000.0, 3488], [1435731300000.0, 4972], [1435731600000.0, 5892], [1435732800000.0, 3116], [1435736100000.0, 17084], [1435736400000.0, 3476], [1435737300000.0, 3076], [1435737600000.0, 3780], [1435737900000.0, 3780], [1435738800000.0, 5040], [1435739400000.0, 12810], [1435739700000.0, 8540], [1435740000000.0, 528756], [1435740300000.0, 17076], [1435740600000.0, 3928], [1435741500000.0, 17080], [1435741800000.0, 24185], [1435742100000.0, 12344], [1435742400000.0, 4292], [1435742700000.0, 18621], [1435743000000.0, 20588], [1435743300000.0, 273131], [1435743600000.0, 4292], [1435744200000.0, 21350], [1435744500000.0, 45435], [1435744800000.0, 13042], [1435745100000.0, 39790], [1435745400000.0, 18185], [1435745700000.0, 21774], [1435746000000.0, 546962], [1435746300000.0, 55771], [1435746600000.0, 74172], [1435746900000.0, 51007], [1435747200000.0, 113430], [1435747500000.0, 802510], [1435747800000.0, 1049353], [1435748100000.0, 342157], [1435748400000.0, 693402], [1435748700000.0, 6379800], [1435749000000.0, 7445967], [1435749300000.0, 3508236], [1435749600000.0, 9032690], [1435749900000.0, 11855194], [1435750200000.0, 11971297], [1435750500000.0, 20998706], [1435750800000.0, 26267080], [1435751100000.0, 19495636], [1435751400000.0, 16850666], [1435751700000.0, 25563946], [1435752000000.0, 16715715], [1435752300000.0, 25168807], [1435752600000.0, 24288604], [1435752900000.0, 27371056], [1435753200000.0, 19795483], [1435753500000.0, 27784445], [1435753800000.0, 22434174], [1435754100000.0, 32998979], [1435754400000.0, 18280124], [1435754700000.0, 29344211], [1435755000000.0, 26461752], [1435755300000.0, 21594567], [1435755600000.0, 17138878], [1435755900000.0, 24123149], [1435756200000.0, 15352119], [1435756500000.0, 24076616], [1435756800000.0, 24307374], [1435757100000.0, 25679599], [1435757400000.0, 23665909], [1435757700000.0, 30511828], [1435758000000.0, 21810108], [1435758300000.0, 22930255], [1435758600000.0, 18707795], [1435758900000.0, 28220464], [1435759200000.0, 26968181], [1435759500000.0, 26933680], [1435759800000.0, 16916373], [1435760100000.0, 21352609], [1435760400000.0, 15378886], [1435760700000.0, 24395740], [1435761000000.0, 26262340], [1435761300000.0, 29133666], [1435761600000.0, 28699575], [1435761900000.0, 30018267], [1435762200000.0, 16427358], [1435762500000.0, 18109086], [1435762800000.0, 18710701], [1435763100000.0, 25363496], [1435763400000.0, 15154065], [1435763700000.0, 22628355], [1435764000000.0, 7627908], [1435764300000.0, 6132212], [1435764600000.0, 2938616], [1435764900000.0, 3720679], [1435765200000.0, 1213086], [1435765500000.0, 1194003], [1435765800000.0, 333744], [1435766100000.0, 10904], [1435766400000.0, 61526]]
+        }
+    ]
+  }
+}
+var initial_main_feed = generate_chart();
+// For the GOT pipeline
+var got_main_feed = generate_chart();
+got_main_feed.xAxis = {categories: []};
+got_main_feed.title.text = "Number of SQL Queries including Table";
+got_main_feed.yAxis.title.text = "Number of SQL Queries";
+
 
 $(function () {
-
-  // Add menu options to change the graph to different types dynamically
-  Highcharts.getOptions().exporting.buttons.contextButton.menuItems.push({separator: true},
-    {text: 'area',
-    onclick: function () {
-        a = $('#feed_main_chart').highcharts();
-        for (i = 0; i < a.series.length; i++) {a.series[i].update({type: 'area'})};
-    }},
-    {text: 'line',
-    onclick: function () {
-        a = $('#feed_main_chart').highcharts();
-        for (i = 0; i < a.series.length; i++) {a.series[i].update({type: 'line'})};
-    }},
-    {text: 'bar',
-    onclick: function () {
-        a = $('#feed_main_chart').highcharts();
-        for (i = 0; i < a.series.length; i++) {a.series[i].update({type: 'bar'})};
-    }}
-  );
-
   //Add buttons
-  $('#feed_main_chart').highcharts(initial_main_feed);
+  var series = initial_main_feed.series;
+  $('#feed_main_chart').highcharts("StockChart", initial_main_feed);
+  initial_main_feed.series = series;
 })
 
 var colorWheel = 1;
@@ -255,23 +265,24 @@ var submit_query = function(e) {
   args = $.param(args);
   console.log(args);
   $.getJSON('/_make_query', args, function(data) {
-        response = initial_main_feed;
-        console.log(data);
-        response.series = response.series.slice(0,1);
-        response.series[0].name = data.name;
-        response.series[0].data = data.data;
-        response.series[0].color = Highcharts.getOptions().colors[colorWheel];
-        
-        colorWheel += 1;
-        var chart = $('#feed_main_chart').highcharts();
-        var chart = new Highcharts.Chart(response);
-        chart.title.attr({text: $('#option').val() + " over Time"});
-        unit = "";
-        if ($('#option').val().includes("Time")){
-          unit += " (ms)"
-        }
-        chart.yAxis[0].axisTitle.attr({text: $('#option').val() + unit});
-        $('#queryStatement').text(data.query);
+    response = initial_main_feed;
+    console.log(data);
+    response.series = response.series.slice(0,1);
+    response.series[0].name = data.name;
+    response.series[0].data = data.data;
+    response.series[0].color = Highcharts.getOptions().colors[colorWheel];
+    
+    colorWheel += 1;
+    var series = response.series;
+    var chart = new Highcharts.StockChart(response);
+    initial_main_feed.series = series;
+    chart.title.attr({text: $('#option').val() + " over Time"});
+    unit = "";
+    if ($('#option').val().includes("Time")){
+      unit += " (ms)"
+    }
+    chart.yAxis[0].axisTitle.attr({text: $('#option').val() + unit});
+    $('#feed_main_chart').prop('title', data.query);
   });
   return false;
 };
@@ -296,24 +307,93 @@ var submit_query_add = function(e) {
     response.series.push({name: data.name, data: data.data, color: Highcharts.getOptions().colors[colorWheel]})
     
     colorWheel += 1;
-    var chart = $('#feed_main_chart').highcharts();
-    var chart = new Highcharts.Chart(response);
+    var series = response.series;
+    var chart = new Highcharts.StockChart(response);
+    initial_main_feed.series = series;
     chart.title.attr({text: $('#option').val() + " over Time"});
-    chart.yAxis[0].axisTitle.attr({text: $('#option').val()});
-    $('#queryStatement').text(data.query);
+        unit = "";
+        if ($('#option').val().includes("Time")){
+          unit += " (ms)"
+        }
+        chart.yAxis[0].axisTitle.attr({text: $('#option').val() + unit});
+    $('#feed_main_chart').prop('title', data.query);
   });
   return false;
 };
 
-// Add a new line to the current graph
-var sqlQuery = function(e) {
-  console.log("Got to sqlQuery");
+var submit_query_GOT = function(e) {
   var args = {
-    query: $('#host').val(),
+    table: 'got',
+    a: $('#spanNames').val()[0],
+    b: $('#domainNames').val()[0],
+    c: $('#host').val().replace('*', '%'),
+    d: $('#client').val().replace('*', '%'),
+    e: $('#table').val().replace('*', '%'),
+    f: $('#startDate').val().replace('T', ' '),
+    g: $('#endDate').val().replace('T', ' ')
   };
   args = $.param(args);
-  $.getJSON('/_make_sql_query', args, function(data) {
-    console.log(data)
+  console.log("GOT console");
+  $.getJSON('/_make_query', args, function(data) {
+    console.log(data);
+
+    // Process the data
+    categories = []
+    series = []
+    for (var n = 0; n< data.data.length; n++) {
+      var obj = data.data[n];
+      categories.push(obj[0]);
+      series.push(obj[1]);
+    }
+
+    response = got_main_feed;
+    response.xAxis.categories = categories;
+    response.series = response.series.slice(0,1);
+    response.series[0].name = data.name;
+    response.series[0].data = series;
+    response.series[0].color = Highcharts.getOptions().colors[colorWheel];
+    
+    colorWheel += 1;
+    var series = response.series;
+    var chart = new Highcharts.StockChart(response);
+    initial_main_feed.series = series;
+  });
+  return false;
+};
+
+
+// Add a new line to the current graph
+var submit_query_add_GOT = function(e) {
+  var args = {
+    table: 'got',
+    a: $('#spanNames').val()[0],
+    b: $('#domainNames').val()[0],
+    c: $('#host').val().replace('*', '%'),
+    d: $('#client').val().replace('*', '%'),
+    e: $('#table').val().replace('*', '%'),
+    f: $('#startDate').val().replace('T', ' '),
+    g: $('#endDate').val().replace('T', ' ')
+  };
+  args = $.param(args);
+  $.getJSON('/_make_query', args, function(data) {
+    response = got_main_feed;
+
+    // Process the data
+    categories = []
+    series = []
+    for (var n = 0; n< data.data.length; n++) {
+      var obj = data.data[n];
+      categories.push(obj[0]);
+      series.push(obj[1]);
+    }
+
+    response.xAxis.categories = categories;
+    response.series.push({name: data.name, data: series, color: Highcharts.getOptions().colors[colorWheel]})
+    
+    colorWheel += 1;
+    var series = response.series;
+    var chart = new Highcharts.StockChart(response);
+    initial_main_feed.series = series;
   });
   return false;
 };

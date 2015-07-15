@@ -188,6 +188,32 @@ var initial_main_feed = {
         },
         min: 0
     },
+    exporting: {
+        buttons: {
+            contextButton: {
+                menuItems: [{
+                    text: 'Print Chart',
+                    onclick: function () {
+                        this.exportChart();
+                    },
+                    separator: false
+                },
+                {
+                    text: 'Export to PNG',
+                    onclick: function () {
+                        this.exportChart();
+                    },
+                    separator: false
+                },
+                {separator: true},
+                {text: 'Graph as Scatter Plot',
+                onclick: function () {
+                    a = $('#feed_main_chart').highcharts();
+                    for (i = 0; i < a.series.length; i++) {a.series[i].update({type: 'scatter'})};
+                }}]
+            }
+        }
+    },
     tooltip: {
         headerFormat: '<b>{series.name}</b><br>',
         pointFormat: '{point.x:%e - %b - %Y}: {point.y:.0f}'
@@ -225,25 +251,6 @@ var initial_main_feed = {
 };
 
 $(function () {
-    // Add menu options to change the graph to different types dynamically
-    Highcharts.getOptions().exporting.buttons.contextButton.menuItems.push({separator: true},
-      {text: 'scatter plot',
-      onclick: function () {
-          a = $('#feed_main_chart').highcharts();
-          for (i = 0; i < a.series.length; i++) {a.series[i].update({type: 'scatter'})};
-      }}
-      // {text: 'line',
-      // onclick: function () {
-      //     a = $('#feed_main_chart').highcharts();
-      //     for (i = 0; i < a.series.length; i++) {a.series[i].update({type: 'line'})};
-      // }},
-      // {text: 'bar',
-      // onclick: function () {
-      //     a = $('#feed_main_chart').highcharts();
-      //     for (i = 0; i < a.series.length; i++) {a.series[i].update({type: 'bar'})};
-      // }}
-    );
-
     // Create the main graph
     $('#feed_main_chart').highcharts(initial_main_feed);
 });
@@ -279,7 +286,7 @@ var submit_query = function(e) {
         console.log(data.data);
         var chart = $('#feed_main_chart').highcharts();
         var chart = new Highcharts.Chart(response);
-        $('#queryStatement').text(data.query);
+        $('#feed_main_chart').prop('title', data.query);
   });
   return false;
 };
@@ -304,7 +311,7 @@ var submit_query_add = function(e) {
         colorWheel += 1;
         var chart = $('#feed_main_chart').highcharts();
         var chart = new Highcharts.Chart(response);
-        $('#queryStatement').text(data.query);
+        $('#feed_main_chart').prop('title', data.query);
   });
   return false;
 };
