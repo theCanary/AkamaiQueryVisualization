@@ -9,17 +9,16 @@
 		<div class="col-sm-7 col-md-7 main chart_container main_chart_container" width ="100%">
 		{% comment Here goes the main graph (main feed) %}
 			<h1 class="page-header">Thread Statistics over Time</h1>
-			<div id = "pipelineDescriptor"> <p>This data is pulled from the <a href = 'https://docs.akamai.com/syscomm/query/internal/design/DDC-parser-query/LogFeatureMapping.html'> TST pipeline</a>, which logs thread usage statistics for each thread. Certain threads such as 'decoder' are multithreaded and appear in the logs as 'decoder01', 'decoder02', etc. For our purposes all of these have been merged together and their values will be the average of each component value. Additionally, the column with the CPU time is considered the sum of the UserTime and SystemTime columns, so the total time is the same as the CPU time.</p> </div>
-			<div id="feed_main_chart"  style="min-width: 310px; height: 400px; margin: 0 auto; overflow: scroll;"></div>
+			<div id = "pipelineDescriptor"> <p>This data is pulled from the <a href = 'https://docs.akamai.com/syscomm/query/internal/design/DDC-parser-query/LogFeatureMapping.html'> TST pipeline</a>, which logs thread usage statistics for each thread. A note about the table structure: the column with the CPU time is considered the sum of the UserTime and SystemTime columns, so the total time is the same as the CPU time.</p> </div>
+			<div id="feed_main_chart"  style="min-width: 310px; height: 500px; margin: 0 auto; overflow: scroll;"></div>
 		</div>
 		<div class="col-sm-5 col-md-5 main">
 			<h1>Query Settings</h1>
-			<p>Type in the Network and Domain boxes to narrow down the list of possible aggsets, and select the field you want to limit your query by.</p>
+			<p>Type in the Network and Domain boxes to narrow down the list of possible aggsets, and select the field you want to limit your query by. Note on the threads list: Certain threads such as 'decoder' are multithreaded and appear in the logs as 'decoder01', 'decoder02', etc. For our purposes all of these have been merged together and their values will be the average of each component value. </p>
 			<p>Queries may take over 30 seconds to render, so please be patient!</p>
 			<p>
 			  <div id="option_inputs" column-count:"3">
 			    <form id = "span" style = "position: relative; float: left; width: 33%;">
-			    <!--    <p><input type="text" id="nrwr" onkeyup="narrow(this.value)" size="12"></p> -->
 			        <p><input type="text" id="nrwr" placeholder = "Network" size="12"></p>
 			        <p>
 			            <span id="spanMatches"></span><br>
@@ -58,7 +57,7 @@
 {% end %}
 {% block footer_scripts %}
 
-<link type="text/css" rel="stylesheet" href="/static/query/tst.css">
+<!-- <link type="text/css" rel="stylesheet" href="/static/query/tst.css"> -->
 <script src="/static/query/tst.js"></script>
 <script src="/static/lighthouse/js/network.js"></script>
 {% comment This makes the page load faster. Faster loading is good. %}

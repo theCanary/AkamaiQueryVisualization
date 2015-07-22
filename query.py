@@ -1,7 +1,12 @@
 import datetime
 
+def check(array):
+    if len(array) == 0:
+        return [[]]
+    else:
+        return array
 
-def dec(cur, span, domain, thread, tableName, ipAddress, startDate, endDate):
+def dec(cur, span, domain, thread, tableName, ipAddress):
 
     command = "SELECT time, sum(numrows) from dec"
     name = ""
@@ -21,7 +26,8 @@ def dec(cur, span, domain, thread, tableName, ipAddress, startDate, endDate):
     if ipAddress != "":
     	name += ipAddress + " "
         command += "ip LIKE '" + ipAddress.replace('*', '%') + "' and "
-    command += "cast(from_unixtime(unix_timestamp(time, 'yyyy/MM/dd:HH:mm:ss')) as timestamp) between cast(from_unixtime(unix_timestamp('" + startDate + "', 'yyyy-MM-dd HH:mm')) as timestamp) and cast(from_unixtime(unix_timestamp('" + endDate + "', 'yyyy-MM-dd HH:mm')) as timestamp) "
+    # command += "cast(from_unixtime(unix_timestamp(time, 'yyyy/MM/dd:HH:mm:ss')) as timestamp) between cast(from_unixtime(unix_timestamp('" + startDate + "', 'yyyy-MM-dd HH:mm')) as timestamp) and cast(from_unixtime(unix_timestamp('" + endDate + "', 'yyyy-MM-dd HH:mm')) as timestamp) "
+    command += "numrows > 0 "
     command += "GROUP BY time ORDER BY cast(from_unixtime(unix_timestamp(time, 'yyyy/MM/dd:HH:mm:ss')) as timestamp)"
     print command
 
@@ -32,7 +38,7 @@ def dec(cur, span, domain, thread, tableName, ipAddress, startDate, endDate):
     json_data = {"data": timeline, "query": command, "name": name}
     return json_data
 
-def tst(cur, span, domain, thread, startDate, endDate, numOption):
+def tst(cur, span, domain, thread, numOption):
     
     tags = [("(Minor)", "(Major)"), ("(Voluntary)", "(Involuntary)"), ("(Input)", "(Output)"), "CPU Time", "RSS Memory"]
     options = ["sum(minorpf), sum(majorpf)", "sum(vcs), sum(ics)", "sum(input), sum(output)", "avg(cpu)", "avg(rss)"]
@@ -51,7 +57,8 @@ def tst(cur, span, domain, thread, startDate, endDate, numOption):
     if thread != "ALL":
     	name += thread
         command += "name LIKE '%" + thread + "%' and "
-    command += "cast(from_unixtime(unix_timestamp(time, 'yyyy/MM/dd:HH:mm:ss')) as timestamp) between cast(from_unixtime(unix_timestamp('" + startDate + "', 'yyyy-MM-dd HH:mm')) as timestamp) and cast(from_unixtime(unix_timestamp('" + endDate + "', 'yyyy-MM-dd HH:mm')) as timestamp) "
+    # command += "cast(from_unixtime(unix_timestamp(time, 'yyyy/MM/dd:HH:mm:ss')) as timestamp) between cast(from_unixtime(unix_timestamp('" + startDate + "', 'yyyy-MM-dd HH:mm')) as timestamp) and cast(from_unixtime(unix_timestamp('" + endDate + "', 'yyyy-MM-dd HH:mm')) as timestamp) "
+    command += "ddc = 0 "
     command += "GROUP BY time ORDER BY cast(from_unixtime(unix_timestamp(time, 'yyyy/MM/dd:HH:mm:ss')) as timestamp)"
     print command
 
@@ -59,18 +66,19 @@ def tst(cur, span, domain, thread, startDate, endDate, numOption):
     timeline = cur.fetchall()
 
     if int(numOption) < 3:
-	    data1 = [[((datetime.datetime.strptime(i[0], '%Y/%m/%d:%H:%M:%S'))-datetime.datetime(1970,1,1)).total_seconds()*1000, i[1]] for i in timeline];
-	    data2 = [[((datetime.datetime.strptime(i[0], '%Y/%m/%d:%H:%M:%S'))-datetime.datetime(1970,1,1)).total_seconds()*1000, i[2]] for i in timeline];
-	    print data1, data2
-	    json_data = {"name1": name + " " + tag[0], "data1": data1, "name2": name + " " +  tag[1], "data2": data2, "query": command}
+        data1 = [[((datetime.datetime.strptime(i[0], '%Y/%m/%d:%H:%M:%S'))-datetime.datetime(1970,1,1)).total_seconds()*1000, i[1]] for i in timeline];
+        data2 = [[((datetime.datetime.strptime(i[0], '%Y/%m/%d:%H:%M:%S'))-datetime.datetime(1970,1,1)).total_seconds()*1000, i[2]] for i in timeline];
+        data1 = check(data1)
+        data2 = check(data2)
+        json_data = {"name1": name + " " + tag[0], "data1": data1, "name2": name + " " +  tag[1], "data2": data2, "query": command}
     else:
-	    data = [[((datetime.datetime.strptime(i[0], '%Y/%m/%d:%H:%M:%S'))-datetime.datetime(1970,1,1)).total_seconds()*1000, i[1]] for i in timeline];
-	    print data
-	    json_data = {"name": name, "data": data, "query": command}
+        data = [[((datetime.datetime.strptime(i[0], '%Y/%m/%d:%H:%M:%S'))-datetime.datetime(1970,1,1)).total_seconds()*1000, i[1]] for i in timeline];
+        data = check(data)
+        json_data = {"name": name, "data": data, "query": command}
 	
     return json_data
 
-def ver(cur, span, domain, multithreaded, ipAddress, aggtype, build, startDate, endDate):
+def ver(cur, span, domain, multithreaded, ipAddress, aggtype, build):
     command = "SELECT CONCAT(substr(starttime,1, 10), ':', substr(starttime,14, 8)), generation from ver"
     name = ""
     command += " WHERE "
@@ -89,7 +97,8 @@ def ver(cur, span, domain, multithreaded, ipAddress, aggtype, build, startDate, 
     if build != "ALL":
     	name += build + " "
         command += "ver = '" + build + "' and "
-    command += "cast(from_unixtime(unix_timestamp(substr(starttime,1, 10), 'yyyy-MM-dd')) as timestamp) between cast(from_unixtime(unix_timestamp('" + startDate + "', 'yyyy-MM-dd HH:mm')) as timestamp) and cast(from_unixtime(unix_timestamp('" + endDate + "', 'yyyy-MM-dd HH:mm')) as timestamp) "
+    # command += "cast(from_unixtime(unix_timestamp(substr(starttime,1, 10), 'yyyy-MM-dd')) as timestamp) between cast(from_unixtime(unix_timestamp('" + startDate + "', 'yyyy-MM-dd HH:mm')) as timestamp) and cast(from_unixtime(unix_timestamp('" + endDate + "', 'yyyy-MM-dd HH:mm')) as timestamp) "
+    command += "generation > 0 "
     # command += "GROUP BY starttime"
      # ORDER BY cast(from_unixtime(substr(starttime,1, 10), 'yyyy-MM-dd') as timestamp)"
     print command
@@ -103,11 +112,11 @@ def ver(cur, span, domain, multithreaded, ipAddress, aggtype, build, startDate, 
     return json_data
 
 
-def sql(cur, span, domain, host, client, startDate, endDate, numOption):
+def sql(cur, span, domain, host, client, numOption):
     print "ok"
 
     ["Returned Rows", "Total Generated Rows", "Query Processing Time", "Total Elapsed Time", "Number of Interrupts", "Number of Error Messages", "Number of Distinct Error Messages", "Total Table Bytes", "Total Temp Table Bytes", "Total Table Indices", "Total Temp Table Indices"]
-    options = ["sum(rows)", "sum(total_rows)", "avg(timetoprocess_ms)", "avg(elapsed_ms)", "sum(interrupts)", "count(error_msg)", "count(distinct error_msg)", "sum(table_index_bytes)", "sum(temp_index_bytes)", "sum(num_table_indexes)", "sum(num_temp_indexes)"]
+    options = ["sum(numrows)", "sum(total_rows)", "avg(timetoprocess_ms)", "avg(elapsed_ms)", "sum(interrupts)", "count(error_msg)", "count(distinct error_msg)", "sum(table_index_bytes)", "sum(temp_index_bytes)", "sum(num_table_indexes)", "sum(num_temp_indexes)"]
     selection = options[int(numOption)]
 
     command = "SELECT time, " + selection + " from sql"
@@ -127,7 +136,8 @@ def sql(cur, span, domain, host, client, startDate, endDate, numOption):
         command += "client LIKE '%" + client + "%' and "
     if int(numOption) in [5,6]:
     	command += "table_type LIKE 'error_table' and " # should all the other queries exclude errors???
-    command += "cast(from_unixtime(unix_timestamp(time, 'yyyy/MM/dd:HH:mm:ss')) as timestamp) between cast(from_unixtime(unix_timestamp('" + startDate + "', 'yyyy-MM-dd HH:mm')) as timestamp) and cast(from_unixtime(unix_timestamp('" + endDate + "', 'yyyy-MM-dd HH:mm')) as timestamp) "
+    # command += "cast(from_unixtime(unix_timestamp(time, 'yyyy/MM/dd:HH:mm:ss')) as timestamp) between cast(from_unixtime(unix_timestamp('" + startDate + "', 'yyyy-MM-dd HH:mm')) as timestamp) and cast(from_unixtime(unix_timestamp('" + endDate + "', 'yyyy-MM-dd HH:mm')) as timestamp) "
+    command += "ddc = 0 "
     command += "GROUP BY time ORDER BY cast(from_unixtime(unix_timestamp(time, 'yyyy/MM/dd:HH:mm:ss')) as timestamp)"
     print command
 
@@ -139,7 +149,7 @@ def sql(cur, span, domain, host, client, startDate, endDate, numOption):
     json_data = {"name": name, "data": data, "query": command}
     return json_data
 
-def got(cur, span, domain, host, client, table, startDate, endDate):
+def got(cur, span, domain, host, client, table):
     print "hi"
     command = "SELECT table_name, count(*) from got"
     name = ""
@@ -158,8 +168,9 @@ def got(cur, span, domain, host, client, table, startDate, endDate):
         command += "client LIKE '%" + client + "%' and "
     if table != "":
     	name += table + " "
-        command += "table LIKE '%" + table + "%' and "
-    command += "cast(from_unixtime(unix_timestamp(time, 'yyyy/MM/dd:HH:mm:ss')) as timestamp) between cast(from_unixtime(unix_timestamp('" + startDate + "', 'yyyy-MM-dd HH:mm')) as timestamp) and cast(from_unixtime(unix_timestamp('" + endDate + "', 'yyyy-MM-dd HH:mm')) as timestamp) "
+        command += "table_name LIKE '%" + table + "%' and "
+    # command += "cast(from_unixtime(unix_timestamp(time, 'yyyy/MM/dd:HH:mm:ss')) as timestamp) between cast(from_unixtime(unix_timestamp('" + startDate + "', 'yyyy-MM-dd HH:mm')) as timestamp) and cast(from_unixtime(unix_timestamp('" + endDate + "', 'yyyy-MM-dd HH:mm')) as timestamp) "
+    command += "ddc = 0 "
     command += "GROUP BY table_name ORDER BY -count(*) limit 20"
     print command
 
@@ -173,7 +184,7 @@ def got(cur, span, domain, host, client, table, startDate, endDate):
     return json_data
 
 
-def mrg(cur, span, domain, tableName, startDate, endDate, numOption):
+def mrg(cur, span, domain, tableName, numOption):
     #["Number of Rows Merged", "Number of Contributors"]
     options = ["sum(numrows)", "sum(contributors)"]
     selection = options[int(numOption)]
@@ -190,7 +201,8 @@ def mrg(cur, span, domain, tableName, startDate, endDate, numOption):
     if tableName != "":
         name += tableName + " "
         command += "table_name LIKE '%" + tableName + "%' and "
-    command += "cast(from_unixtime(unix_timestamp(time, 'yyyy/MM/dd:HH:mm:ss')) as timestamp) between cast(from_unixtime(unix_timestamp('" + startDate + "', 'yyyy-MM-dd HH:mm')) as timestamp) and cast(from_unixtime(unix_timestamp('" + endDate + "', 'yyyy-MM-dd HH:mm')) as timestamp) "
+    # command += "cast(from_unixtime(unix_timestamp(time, 'yyyy/MM/dd:HH:mm:ss')) as timestamp) between cast(from_unixtime(unix_timestamp('" + startDate + "', 'yyyy-MM-dd HH:mm')) as timestamp) and cast(from_unixtime(unix_timestamp('" + endDate + "', 'yyyy-MM-dd HH:mm')) as timestamp) "
+    command += "ddc = 0 "
     command += "GROUP BY time ORDER BY cast(from_unixtime(unix_timestamp(time, 'yyyy/MM/dd:HH:mm:ss')) as timestamp)"
     print command
 

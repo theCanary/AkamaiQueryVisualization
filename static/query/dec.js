@@ -114,26 +114,11 @@ $(function () {
     // Add table and IP input box
     $('<p><input type="text" id="tableNames" placeholder = "Table Name" size="12"></p>').appendTo('#other');
     $('<p><input type="text" id="ipAddress" placeholder = "IP Address" size="12" ></p>').appendTo('#other');
-    // Add start and end date input boxes
-    $('<p><input type="datetime-local" id="startDate" placeholder = "Start Date" size="12" > - Start Date</p>').appendTo('#option_inputs');
-    $('<p><input type="datetime-local" id="endDate" placeholder = "End Date" size="12" > - End Date</p>').appendTo('#option_inputs');
 
     // Set defaults for span and domain and thread
     $("option:contains('ALL')")[0]["selected"] = true; //span
     $("option:contains('ALL')")[1]["selected"] = true; //domain
     $("option:contains('ALL')")[2]["selected"] = true; //thread
-        //Start and end dates
-    Date.prototype.today = function () { 
-      return (this.getFullYear() + "-"  + (((this.getMonth()+1) < 10)?"0":"") + (this.getMonth()+1) + "-"  + ((this.getDate() < 10)?"0":"") + this.getDate());
-    }
-    Date.prototype.timeNow = function () {
-       return "T" + ((this.getHours() < 10)?"0":"") + this.getHours() +":"+ ((this.getMinutes() < 10)?"0":"") + this.getMinutes();
-    }
-    var newDate = new Date();
-    var datetime = newDate.today() + newDate.timeNow();
-    $("#endDate").val(datetime)
-    var prevDate = new Date(new Date(datetime) - (60*60*24*1000*365)).toJSON().substring(0,16) //edit the string to make it the right format
-    $("#startDate").val(prevDate);
     
     //Create and add buttons
     $('<p><input type="button" id="newGraph" value = "New Graph"><br></p>').appendTo('#button_div');
@@ -308,9 +293,7 @@ var submit_query = function(e) {
     b: $('#domainNames').val()[0],
     c: $('#threadNames').val()[0],
     d: $('#tableNames').val(),
-    e: $('#ipAddress').val(),
-    f: $('#startDate').val().replace('T', ' '),
-    g: $('#endDate').val().replace('T', ' ')
+    e: $('#ipAddress').val()
   };
   args = $.param(args);
   $.getJSON('/_make_query', args, function(data) {
@@ -336,9 +319,7 @@ var submit_query_add = function(e) {
     b: $('#domainNames').val()[0],
     c: $('#threadNames').val()[0],
     d: $('#tableNames').val(),
-    e: $('#ipAddress').val(),
-    f: $('#startDate').val().replace('T', ' '),
-    g: $('#endDate').val().replace('T', ' ')
+    e: $('#ipAddress').val()
   };
   args = $.param(args);
   $.getJSON('/_make_query', args, function(data) {

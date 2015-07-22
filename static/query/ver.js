@@ -109,58 +109,32 @@ $(function () {
     $("<p>Aggset Type: <select id = 'aggtype'><option>ALL</option><option>tla</option><option>tla/sql</option><option>sql</option> </select> </p>").appendTo('#other');
     $("<p>Build Version: <select id = 'build'><option>ALL</option><option> 6.6.1</option></select> </p>").appendTo('#other');
 
-    // Add start and end date input boxes
-    $('<p><input type="datetime-local" id="startDate" placeholder = "Start Date" size="12" > - Start Date</p>').appendTo('#option_inputs');
-    $('<p><input type="datetime-local" id="endDate" placeholder = "End Date" size="12" > - End Date</p>').appendTo('#option_inputs');
-
     // Set defaults for span and domain
     $("option:contains('ALL')")[0]["selected"] = true; //span
     $("option:contains('ALL')")[1]["selected"] = true; //domain
-        //Start and end dates
-    Date.prototype.today = function () { 
-      return (this.getFullYear() + "-"  + (((this.getMonth()+1) < 10)?"0":"") + (this.getMonth()+1) + "-"  + ((this.getDate() < 10)?"0":"") + this.getDate());
-    }
-    Date.prototype.timeNow = function () {
-       return "T" + ((this.getHours() < 10)?"0":"") + this.getHours() +":"+ ((this.getMinutes() < 10)?"0":"") + this.getMinutes();
-    }
-    var newDate = new Date();
-    var datetime = newDate.today() + newDate.timeNow();
-    $("#endDate").val(datetime)
-    var prevDate = new Date(new Date(datetime) - (60*60*24*1000*365)).toJSON().substring(0,16) //edit the string to make it the right format
-    $("#startDate").val(prevDate);
     
     //Create and add buttons
+    $('<p>This graph is pretty useless.<br></p>').appendTo('#button_div');
     $('<p><input type="button" id="newGraph" value = "New Graph"><br></p>').appendTo('#button_div');
     $('<p><input type="button" id="addGraph" value = "Add Graph"><br></p>').appendTo('#button_div');
+
     // If you click the button, this will run
     $('#newGraph').bind('click', submit_query);
     $('#addGraph').bind('click', submit_query_add);
 });
 
+
 /*
 Initialize the page with graphs
 */
-var initial_main_feed = {
+function generate_chart() {
+  return {
     chart: {
         type: 'scatter',
         zoomType: 'x'
     },
     title: {
         text: 'Generation Interval over process Start Time'
-    },
-    subtitle: {
-        text: '(Click and drag to zoom in)'
-    },
-    legend: {
-        align: 'right',
-        x: -20,
-        verticalAlign: 'top',
-        y: 25,
-        floating: true,
-        backgroundColor: (Highcharts.theme && Highcharts.theme.background2) || 'white',
-        borderColor: '#CCC',
-        borderWidth: 1,
-        shadow: false
     },
     xAxis: {
         type: 'datetime',
@@ -187,6 +161,12 @@ var initial_main_feed = {
             style: { fontWeight: 'bold', color: (Highcharts.theme && Highcharts.theme.textColor) || 'gray' }
         },
         min: 0
+    },
+    navigator: {
+        enabled: true
+    },
+    legend: {
+        enabled: true
     },
     exporting: {
         buttons: {
@@ -215,8 +195,8 @@ var initial_main_feed = {
         }
     },
     tooltip: {
-        headerFormat: '<b>{series.name}</b><br>',
-        pointFormat: '{point.x:%e - %b - %Y}: {point.y:.0f}'
+        pointFormat: '<span style="color:{series.color}">{series.name}</span>: <b>{point.y:.0f}</b><br/>',//'{point.x: %b/%e/%Y}: {point.y:.0f}'
+        valueDecimals: 0
     },
 
     plotOptions: {
@@ -248,11 +228,16 @@ var initial_main_feed = {
     //     // marker: {radius: 6}
     // }
     ]
-};
+  }
+}
+
+var initial_main_feed = generate_chart();
 
 $(function () {
     // Create the main graph
-    $('#feed_main_chart').highcharts(initial_main_feed);
+    var series = initial_main_feed.series;
+    $('#feed_main_chart').highcharts("StockChart", initial_main_feed);
+    initial_main_feed.series = series;
 });
 
 
@@ -271,9 +256,7 @@ var submit_query = function(e) {
     c: $('#multithreaded').is(':checked'),
     d: $('#ipAddress').val(),
     e: $('#aggtype').val(),
-    f: $('#build').val(),
-    g: $('#startDate').val().replace('T', ' '),
-    h: $('#endDate').val().replace('T', ' ')
+    f: $('#build').val()
   };
   args = $.param(args);
   $.getJSON('/_make_query', args, function(data) {
@@ -284,8 +267,9 @@ var submit_query = function(e) {
         response.series[0].color = Highcharts.getOptions().colors[colorWheel];
         colorWheel += 1;
         console.log(data.data);
-        var chart = $('#feed_main_chart').highcharts();
-        var chart = new Highcharts.Chart(response);
+        var series = response.series;
+        var chart = new Highcharts.StockChart(response);
+        initial_main_feed.series = series;
         $('#feed_main_chart').prop('title', data.query);
   });
   return false;
@@ -300,17 +284,16 @@ var submit_query_add = function(e) {
     c: $('#multithreaded').is(':checked'),
     d: $('#ipAddress').val(),
     e: $('#aggtype').val(),
-    f: $('#build').val(),
-    g: $('#startDate').val().replace('T', ' '),
-    h: $('#endDate').val().replace('T', ' ')
+    f: $('#build').val()
   };
   args = $.param(args);
   $.getJSON('/_make_query', args, function(data) {
         response = initial_main_feed;
         response.series.push({name: data.name, data: data.data, color: Highcharts.getOptions().colors[colorWheel]})
         colorWheel += 1;
-        var chart = $('#feed_main_chart').highcharts();
-        var chart = new Highcharts.Chart(response);
+        var series = response.series;
+        var chart = new Highcharts.StockChart(response);
+        initial_main_feed.series = series;
         $('#feed_main_chart').prop('title', data.query);
   });
   return false;

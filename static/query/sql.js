@@ -114,41 +114,25 @@ $(function () {
       "<option>Number of Error Messages</option><option>Number of Distinct Error Messages</option>" +
       "<option>Total Table Bytes</option> <option>Total Temp Table Bytes</option> <option>Total Table Indices</option> " +
       "<option>Total Temp Table Indices</option>  </select></p>").appendTo('#option_inputs');
-    $('<p><input type="datetime-local" id="startDate" placeholder = "Start Date" size="12" > - Start Date</p>').appendTo('#option_inputs');
-    $('<p><input type="datetime-local" id="endDate" placeholder = "End Date" size="12" > - End Date</p>').appendTo('#option_inputs');
 
     //Set defaults
     $("option:contains('ALL')")[0]["selected"] = true; //span
     $("option:contains('ALL')")[1]["selected"] = true; //domain
-
-    //Start and end dates
-    Date.prototype.today = function () { 
-      return (this.getFullYear() + "-"  + (((this.getMonth()+1) < 10)?"0":"") + (this.getMonth()+1) + "-"  + ((this.getDate() < 10)?"0":"") + this.getDate());
-    }
-    Date.prototype.timeNow = function () {
-       return "T" + ((this.getHours() < 10)?"0":"") + this.getHours() +":"+ ((this.getMinutes() < 10)?"0":"") + this.getMinutes();
-    }
-    var newDate = new Date();
-    var datetime = newDate.today() + newDate.timeNow();
-    $("#endDate").val(datetime)
-    var prevDate = new Date(new Date(datetime) - (60*60*24*30*4*1000)).toJSON().substring(0,16) //edit the string to make it the right format
-    $("#startDate").val(prevDate);
-
 
     //Create and add buttons
     $('<p>Click these to graph query stats data from the SQL pipeline</p>').appendTo('#sql_button_div');
     $('<p><input type="button" id="newGraph" value = "New Graph"><br></p>').appendTo('#sql_button_div');
     $('<p><input type="button" id="addGraph" value = "Add Graph"><br></p>').appendTo('#sql_button_div');
     
-    $('<p>Click these to graph table data from the GOT pipeline</p>').appendTo('#got_button_div');
+    $('<p>Click to graph table data from the GOT pipeline, showing the top tables with the largest amount of queries.</p>').appendTo('#got_button_div');
     $('<p><input type="button" id="newGraphGOT" value = "New Graph"><br></p>').appendTo('#got_button_div');
-    $('<p><input type="button" id="addGraphGOT" value = "Add Graph"><br></p>').appendTo('#got_button_div');
+    // $('<p><input type="button" id="addGraphGOT" value = "Add Graph"><br></p>').appendTo('#got_button_div');
 
     // If you click the buttons, functions will run
     $('#newGraph').bind('click', submit_query);
     $('#addGraph').bind('click', submit_query_add);
     $('#newGraphGOT').bind('click', submit_query_GOT);
-    $('#addGraphGOT').bind('click', submit_query_add_GOT);
+    // $('#addGraphGOT').bind('click', submit_query_add_GOT);
 });
 
 
@@ -234,13 +218,81 @@ function generate_chart() {
     ]
   }
 }
-var initial_main_feed = generate_chart();
-// For the GOT pipeline
-var got_main_feed = generate_chart();
-got_main_feed.xAxis = {categories: []};
-got_main_feed.title.text = "Number of SQL Queries including Table";
-got_main_feed.yAxis.title.text = "Number of SQL Queries";
 
+var initial_main_feed = generate_chart();
+
+// For the GOT pipeline
+
+function generate_got_chart() {
+  return {
+    chart: {type: 'column', zoomType: 'x'},
+    title: {text: 'Number of SQL Queries including Table'},
+    xAxis: {type: 'categories', categories: []},
+    yAxis: { title: { text: 'Number of SQL Queries'},
+        min: 0,
+        stackLabels: {
+                  enabled: true,
+                  style: { fontWeight: 'bold', color: (Highcharts.theme && Highcharts.theme.textColor) || 'gray' }
+              }
+    },
+    exporting: {
+        buttons: {
+            contextButton: {
+                menuItems: [{
+                    text: 'Print Chart',
+                    onclick: function () {
+                        this.exportChart();
+                    },
+                    separator: false
+                },
+                {
+                    text: 'Export to PNG',
+                    onclick: function () {
+                        this.exportChart();
+                    },
+                    separator: false
+                },
+                {separator: true},
+                {text: 'Graph as Area Chart',
+                onclick: function () {
+                    a = $('#feed_main_chart').highcharts();
+                    for (i = 0; i < a.series.length; i++) {a.series[i].update({type: 'area'})};
+                }},
+                {text: 'Graph as Line Chart',
+                onclick: function () {
+                    a = $('#feed_main_chart').highcharts();
+                    for (i = 0; i < a.series.length; i++) {a.series[i].update({type: 'line'})};
+                }},
+                {text: 'Graph as Bar Chart',
+                onclick: function () {
+                    a = $('#feed_main_chart').highcharts();
+                    for (i = 0; i < a.series.length; i++) {a.series[i].update({type: 'bar'})};
+                }}]
+            }
+        }
+    },
+    navigator: {
+        enabled: false,
+    },
+    legend: {
+        enabled: true
+    },
+    tooltip: {
+        pointFormat: '<span style="color:{series.color}">{series.name}</span>: <b>{point.y:.0f}</b><br/>',//'{point.x: %b/%e/%Y}: {point.y:.0f}'
+        valueDecimals: 0
+    },
+    plotOptions: {
+        spline: {
+                  marker: {
+                      enabled: true
+                  }
+              }
+    },
+    series: []
+  }
+}
+
+var got_main_feed = generate_got_chart();
 
 $(function () {
   //Add buttons
@@ -258,8 +310,6 @@ var submit_query = function(e) {
     b: $('#domainNames').val()[0],
     c: $('#host').val(),
     d: $('#client').val(),
-    e: $('#startDate').val().replace('T', ' '),
-    f: $('#endDate').val().replace('T', ' '),
     option: optionNum.toString()
   };
   args = $.param(args);
@@ -282,7 +332,6 @@ var submit_query = function(e) {
       unit += " (ms)"
     }
     chart.yAxis[0].axisTitle.attr({text: $('#option').val() + unit});
-    $('#feed_main_chart').prop('title', data.query);
   });
   return false;
 };
@@ -297,8 +346,6 @@ var submit_query_add = function(e) {
     b: $('#domainNames').val()[0],
     c: $('#host').val().replace('*', '%'),
     d: $('#client').val().replace('*', '%'),
-    e: $('#startDate').val().replace('T', ' '),
-    f: $('#endDate').val().replace('T', ' '),
     option: optionNum.toString()
   };
   args = $.param(args);
@@ -316,7 +363,6 @@ var submit_query_add = function(e) {
           unit += " (ms)"
         }
         chart.yAxis[0].axisTitle.attr({text: $('#option').val() + unit});
-    $('#feed_main_chart').prop('title', data.query);
   });
   return false;
 };
@@ -328,14 +374,11 @@ var submit_query_GOT = function(e) {
     b: $('#domainNames').val()[0],
     c: $('#host').val().replace('*', '%'),
     d: $('#client').val().replace('*', '%'),
-    e: $('#table').val().replace('*', '%'),
-    f: $('#startDate').val().replace('T', ' '),
-    g: $('#endDate').val().replace('T', ' ')
+    e: $('#table').val().replace('*', '%')
   };
   args = $.param(args);
   console.log("GOT console");
   $.getJSON('/_make_query', args, function(data) {
-    console.log(data);
 
     // Process the data
     categories = []
@@ -345,55 +388,22 @@ var submit_query_GOT = function(e) {
       categories.push(obj[0]);
       series.push(obj[1]);
     }
-
     response = got_main_feed;
     response.xAxis.categories = categories;
-    response.series = response.series.slice(0,1);
-    response.series[0].name = data.name;
-    response.series[0].data = series;
-    response.series[0].color = Highcharts.getOptions().colors[colorWheel];
-    
-    colorWheel += 1;
-    var series = response.series;
-    var chart = new Highcharts.StockChart(response);
-    initial_main_feed.series = series;
-  });
-  return false;
-};
-
-
-// Add a new line to the current graph
-var submit_query_add_GOT = function(e) {
-  var args = {
-    table: 'got',
-    a: $('#spanNames').val()[0],
-    b: $('#domainNames').val()[0],
-    c: $('#host').val().replace('*', '%'),
-    d: $('#client').val().replace('*', '%'),
-    e: $('#table').val().replace('*', '%'),
-    f: $('#startDate').val().replace('T', ' '),
-    g: $('#endDate').val().replace('T', ' ')
-  };
-  args = $.param(args);
-  $.getJSON('/_make_query', args, function(data) {
-    response = got_main_feed;
-
-    // Process the data
-    categories = []
-    series = []
-    for (var n = 0; n< data.data.length; n++) {
-      var obj = data.data[n];
-      categories.push(obj[0]);
-      series.push(obj[1]);
+    if (response.series.length > 0){
+      response.series = response.series.slice(0,1);
+      response.series[0].name = data.name;
+      response.series[0].data = series;
+      response.series[0].color = Highcharts.getOptions().colors[colorWheel];
     }
-
-    response.xAxis.categories = categories;
-    response.series.push({name: data.name, data: series, color: Highcharts.getOptions().colors[colorWheel]})
-    
+    else {
+      response.series.push({name: data.name, data: series, color: Highcharts.getOptions().colors[colorWheel]})
+    }
     colorWheel += 1;
     var series = response.series;
-    var chart = new Highcharts.StockChart(response);
-    initial_main_feed.series = series;
+    response.series = series;
+    $('#feed_main_chart').highcharts(response) //Due to the nature of this graph, we don't use the navigator bar
+    got_main_feed.series = series;
   });
   return false;
 };

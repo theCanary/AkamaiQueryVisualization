@@ -2,6 +2,8 @@
 Sets up a basic Tornado server application that serves a single page
 for graphs, and a JSON object containing graph data, for tests.
 """
+# impor tsys
+# sys.paths.append
 from tornado.ioloop import IOLoop
 from tornado.web import RequestHandler, Application, url, StaticFileHandler
 from tornado.websocket import WebSocketHandler, WebSocketClosedError
@@ -31,7 +33,7 @@ ALL_SOCKETS = [] #store all client sockets here - this could get messy; figure o
 all_alerts = sortedcontainers.SortedListWithKey(key=lambda x: x["score"]) #can't leave this in fake_data, it's got state.
 
 # CHANGE THIS IF THE IMPALA DATABASE CHANGES - ashwang
-host_machine_ip_address = '198.18.55.221'
+host_machine_ip_address = '198.18.55.217'
 
 """
 Handler that carries any variables we want to toss in multiple templates at once.
@@ -141,6 +143,8 @@ class TableGeneratorHandler(BaseQuery2Handler):
 	    conn = connect(host = host_machine_ip_address, port=21050)
 	    cur = conn.cursor()
 	    command = self.get_argument('query')
+	    if "drop" in command.lower():
+	    	return
 	    cur.execute(command.encode('ascii','ignore').replace(";", ""))
 	    data = cur.fetchall()
 	    print data
@@ -167,6 +171,8 @@ class SQLQueryHandler(BaseQuery2Handler):
 	    conn = connect(host = host_machine_ip_address, port=21050)
 	    cur = conn.cursor()
 	    command = self.get_argument('query')
+	    if "drop" in command.lower():
+	    	return
 	    cur.execute(command.encode('ascii','ignore').replace(";", ""))
 	    data = cur.fetchall()
 	    print data
@@ -205,9 +211,9 @@ class QueryHandler(BaseQuery2Handler):
 		    threadName = self.get_argument('c')
 		    tableName = self.get_argument('d')
 		    ipAddress = self.get_argument('e')
-		    startDate = self.get_argument('f')
-		    endDate = self.get_argument('g')
-		    json_data = query.dec(cur, span, domain, threadName, tableName, ipAddress, startDate, endDate)
+		    # startDate = self.get_argument('f')
+		    # endDate = self.get_argument('g')
+		    json_data = query.dec(cur, span, domain, threadName, tableName, ipAddress)
 	    # elif table == 'tst_CPU_RSS': # Set in tst.js
 		   #  span = self.get_argument('a')
 		   #  domain = self.get_argument('b')
@@ -218,10 +224,8 @@ class QueryHandler(BaseQuery2Handler):
 		    span = self.get_argument('a')
 		    domain = self.get_argument('b')
 		    thread = self.get_argument('c')
-		    startDate = self.get_argument('d')
-		    endDate = self.get_argument('e')
 		    option = self.get_argument('option')
-		    json_data = query.tst(cur, span, domain, thread, startDate, endDate, option)
+		    json_data = query.tst(cur, span, domain, thread, option)
 	    elif table == 'ver': # Set in ver.js
 		    span = self.get_argument('a')
 		    domain = self.get_argument('b')
@@ -229,35 +233,27 @@ class QueryHandler(BaseQuery2Handler):
 		    ipAddress = self.get_argument('d')
 		    aggtype = self.get_argument('e')
 		    build = self.get_argument('f')
-		    startDate = self.get_argument('g')
-		    endDate = self.get_argument('h')
-		    json_data = query.ver(cur, span, domain, multithreaded, ipAddress, aggtype, build, startDate, endDate)
+		    json_data = query.ver(cur, span, domain, multithreaded, ipAddress, aggtype, build)
 	    elif table == 'sql': # Set in sql.js
 		    span = self.get_argument('a')
 		    domain = self.get_argument('b')
 		    host = self.get_argument('c')
 		    client = self.get_argument('d')
-		    startDate = self.get_argument('e')
-		    endDate = self.get_argument('f')
 		    option = self.get_argument('option')
-		    json_data = query.sql(cur, span, domain, host, client, startDate, endDate, option)
+		    json_data = query.sql(cur, span, domain, host, client, option)
 	    elif table == 'got': # Set in sql.js as well since GOT is so similar to SQL
 		    span = self.get_argument('a')
 		    domain = self.get_argument('b')
 		    host = self.get_argument('c')
 		    client = self.get_argument('d')
 		    table = self.get_argument('e')
-		    startDate = self.get_argument('f')
-		    endDate = self.get_argument('g')
-		    json_data = query.got(cur, span, domain, host, client, table, startDate, endDate)
+		    json_data = query.got(cur, span, domain, host, client, table)
 	    elif table == 'mrg': # Set in mrg.js
 		    span = self.get_argument('a')
 		    domain = self.get_argument('b')
 		    tableName = self.get_argument('c')
-		    startDate = self.get_argument('d')
-		    endDate = self.get_argument('e')
 		    option = self.get_argument('option')
-		    json_data = query.mrg(cur, span, domain, tableName, startDate, endDate, option)
+		    json_data = query.mrg(cur, span, domain, tableName, option)
 
 	    self.write(json_data)
 
@@ -314,8 +310,8 @@ Creates handlers and options for our application.
 def make_application():
 	handlers = [
 		url(r"/socket/", ClientSocket),
-		url(r"/",HomeHandler),
-		url(r"/home/",HomeHandler), # DEC pipeline
+		url(r"/",DashboardHandler), #HomeHandler
+		url(r"/home/",DashboardHandler), # DEC pipeline
 		url(r"/dashboard/",DashboardHandler), # DEC pipeline
 		url(r"/threadstats/",TSTHandler),
 		url(r"/versionstats/",VERHandler),

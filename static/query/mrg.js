@@ -108,25 +108,10 @@ $(function () {
     // Add query and time inputs
     $('<p>NOTE: This field should be filled in, or the output may be nonsensical.</p><p><input type="text" id="tableNames" placeholder = "Table Name" size="12"></p>').appendTo('#option_inputs');
     $("<p><select id = 'option'><option>Number of Rows Merged</option> <option>Number of Contributors</option></select> </p>").appendTo('#option_inputs');
-    $('<p><input type="datetime-local" id="startDate" placeholder = "Start Date" size="12" > - Start Date</p>').appendTo('#option_inputs');
-    $('<p><input type="datetime-local" id="endDate" placeholder = "End Date" size="12" > - End Date</p>').appendTo('#option_inputs');
 
     //Set defaults
     $("option:contains('ALL')")[0]["selected"] = true; //span
     $("option:contains('ALL')")[1]["selected"] = true; //domain
-    //Start and end dates
-    Date.prototype.today = function () { 
-      return (this.getFullYear() + "-"  + (((this.getMonth()+1) < 10)?"0":"") + (this.getMonth()+1) + "-"  + ((this.getDate() < 10)?"0":"") + this.getDate());
-    }
-    Date.prototype.timeNow = function () {
-       return "T" + ((this.getHours() < 10)?"0":"") + this.getHours() +":"+ ((this.getMinutes() < 10)?"0":"") + this.getMinutes();
-    }
-    var newDate = new Date();
-    var datetime = newDate.today() + newDate.timeNow();
-    $("#endDate").val(datetime)
-    var prevDate = new Date(new Date(datetime) - (60*60*24*30*4*1000)).toJSON().substring(0,16) //edit the string to make it the right format
-    $("#startDate").val(prevDate);
-
 
     //Create and add buttons
     $('<p><input type="button" id="newGraph" value = "New Graph"><br></p>').appendTo('#button_div');
@@ -206,6 +191,59 @@ function generate_chart() {
         pointFormat: '<span style="color:{series.color}">{series.name}</span>: <b>{point.y:.0f}</b><br/>',//'{point.x: %b/%e/%Y}: {point.y:.0f}'
         valueDecimals: 0
     },
+    annotations: [{
+            title: 'on point <br> drag&drop <br> disabled',
+            linkedTo: 'high',
+            anchorX: "middle",
+            anchorY: "middle",
+            allowDragY: false,
+            allowDragX: false,
+            shape: {
+                type: 'circle',
+                params: {
+                    r: 40,
+                    stroke: '#c55'
+                }
+            }
+        },
+        {
+          x: 100,
+          y: 200,
+          title: 'drag me <br> verticaly',
+          anchorX: "left",
+          anchorY: "top",
+          allowDragY: true,
+          allowDragX: false,
+          shape: {
+              type: 'rect',
+              params: {
+                x: 0,
+                y: 0,
+                width: 55,
+                height: 40
+              }
+          },
+          events: {
+              mouseover: function(e) {
+                  console.log("MouseOver", e, this);  
+              },
+              mouseout: function(e) {
+                  console.log("MouseOut", e, this); 
+              },
+              mousedown: function(e) {
+                  console.log("MouseDown", e, this);  
+              },
+              mouseup: function(e) {
+                  console.log("MouseUp", e, this);  
+              },
+              click: function(e) {
+                  console.log("Click", e, this);  
+              },
+              dblclick: function(e) {
+                  console.log("Double Click", e, this); 
+              }
+          }
+        }],
     plotOptions: {
         connectNulls: true,
         spline: {
@@ -242,8 +280,6 @@ var submit_query = function(e) {
     a: $('#spanNames').val()[0],
     b: $('#domainNames').val()[0],
     c: $('#tableNames').val(),
-    d: $('#startDate').val().replace('T', ' '),
-    e: $('#endDate').val().replace('T', ' '),
     option: optionNum.toString()
   };
   args = $.param(args);
@@ -276,8 +312,6 @@ var submit_query_add = function(e) {
     a: $('#spanNames').val()[0],
     b: $('#domainNames').val()[0],
     c: $('#tableNames').val(),
-    d: $('#startDate').val().replace('T', ' '),
-    e: $('#endDate').val().replace('T', ' '),
     option: optionNum.toString()
   };
   args = $.param(args);

@@ -8,7 +8,7 @@ var UNDEFINED,
         merge = H.merge,
         each = H.each;
 
-H.ALLOWED_SHAPES = ["path", "rect", "circle"];
+H.ALLOWED_SHAPES = ["rect", "circle"]; //"path", 
 
 ALIGN_FACTOR = {
         top: 0,
@@ -376,7 +376,7 @@ function attachEvents(chart) {
 		var options = merge(chart.annotations.options.buttons[selected].annotation, {
 			xValue: xAxis.toValue(clickX),
 			yValue: yAxis.toValue(clickY),
-			allowDragX: true,
+			allowDragX: false,
 			allowDragY: true
 		});
 		
@@ -710,6 +710,7 @@ Annotation.prototype = {
          * Destroy the annotation
          */
         destroy: function () {
+        		console.log("destroy");
                 var annotation = this,
                         chart = this.chart,
                         allItems = chart.annotations.allItems,

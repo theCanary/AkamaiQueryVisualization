@@ -10,12 +10,12 @@
 		{% comment Here goes the main graph (main feed) %}
 			<h1 class="page-header">Table Size Over Time</h1>
 			<p>This data is pulled from the <a href = 'https://docs.akamai.com/syscomm/query/internal/design/DDC-parser-query/LogFeatureMapping.html'> DEC pipeline</a>, which logs information from every table decoded from every connection to the aggregator providing table data. </p>
-			<div id="feed_main_chart"  style="min-width: 310px; height: 400px; margin: 0 auto; overflow: scroll;"></div>
+			<div id="feed_main_chart"  style="min-width: 310px; height: 500px; margin: 0 auto; overflow: scroll;"></div>
 		</div>
 		<div class="col-sm-5 col-md-5 main">
 			<h1>Query Settings</h1>
 			<p>Type in the Network and Domain boxes to narrow down the list of possible aggsets, and select the field you want to limit your query by. To limit by table or IP Address, type the full name or a partial name followed by a * in the text field. </p>
-			<p>Queries may take over 30 seconds to render, so please be patient!</p>
+			<p>If we query the dec table directly, it will take around 30 minutes to render the data. If we query an optimized view of dec, dec_opt, the query returns in around 30 seconds but at the cost of some larger queries (can't leave all the narrowing fields blank).</p>
 			<p>
 			  <div id="option_inputs" column-count:"3">
 			    <form id = "span" style = "position: relative; float: left; width: 33%;">

@@ -115,26 +115,11 @@ $(function () {
 
     // Add query and time inputs
     $("<p><select id = 'option'><option>Page Faults</option> <option>Context Switches</option> <option>Input/Output Blocks</option> <option>CPU Time</option> <option>RSS Memory</option> </select> </p>").appendTo('#option_inputs');
-    $('<p><input type="datetime-local" id="startDate" placeholder = "Start Date" size="12" > - Start Date</p>').appendTo('#option_inputs');
-    $('<p><input type="datetime-local" id="endDate" placeholder = "End Date" size="12" > - End Date</p>').appendTo('#option_inputs');
 
     //Set defaults
     $("option:contains('ALL')")[0]["selected"] = true; //span
     $("option:contains('ALL')")[1]["selected"] = true; //domain
     $("option:contains('ALL')")[2]["selected"] = true; //thread
-    //Start and end dates
-    Date.prototype.today = function () { 
-      return (this.getFullYear() + "-"  + (((this.getMonth()+1) < 10)?"0":"") + (this.getMonth()+1) + "-"  + ((this.getDate() < 10)?"0":"") + this.getDate());
-    }
-    Date.prototype.timeNow = function () {
-       return "T" + ((this.getHours() < 10)?"0":"") + this.getHours() +":"+ ((this.getMinutes() < 10)?"0":"") + this.getMinutes();
-    }
-    var newDate = new Date();
-    var datetime = newDate.today() + newDate.timeNow();
-    $("#endDate").val(datetime)
-    var prevDate = new Date(new Date(datetime) - (60*60*24*30*4*1000)).toJSON().substring(0,16) //edit the string to make it the right format
-    $("#startDate").val(prevDate);
-
 
     //Create and add buttons
     $('<p><input type="button" id="newGraph" value = "New Graph"><br></p>').appendTo('#button_div');
@@ -153,7 +138,6 @@ function generate_chart() {
   return {
     chart: {type: 'spline', zoomType: 'x'},
     title: {text: 'Thread CPU Time over Time'},
-    subtitle: {text: 'Click and drag to zoom in'},
     xAxis: {type: 'datetime',
         dateTimeLabelFormats: { // don't display the dummy year
             month: '%e. %b',
@@ -204,21 +188,15 @@ function generate_chart() {
             }
         }
     },
+    navigator: {
+        enabled: true
+    },
     legend: {
-        align: 'right',
-        x: -20,
-        y: -20,
-        verticalAlign: 'top',
-        y: 25,
-        floating: true,
-        backgroundColor: (Highcharts.theme && Highcharts.theme.background2) || 'white',
-        borderColor: '#CCC',
-        borderWidth: 1,
-        shadow: false
+        enabled: true
     },
     tooltip: {
-        headerFormat: '<b>{series.name}</b><br>',
-        pointFormat: '{point.x:%e - %b - %Y}: {point.y:.0f}'
+        pointFormat: '<span style="color:{series.color}">{series.name}</span>: <b>{point.y:.0f}</b><br/>',//'{point.x: %b/%e/%Y}: {point.y:.0f}'
+        valueDecimals: 0
     },
     plotOptions: {
         spline: {
@@ -256,7 +234,9 @@ var initial_main_feed = generate_chart();
 
 $(function () {
   //Draw the chart
-  $('#feed_main_chart').highcharts(initial_main_feed);
+  var series = initial_main_feed.series;
+  $('#feed_main_chart').highcharts("StockChart", initial_main_feed);
+  initial_main_feed.series = series;
 })
 
 var colorWheel = 0;
@@ -267,8 +247,6 @@ var submit_query = function(e) {
     a: $('#spanNames').val()[0],
     b: $('#domainNames').val()[0],
     c: $('#threadNames').val()[0],
-    d: $('#startDate').val().replace('T', ' '),
-    e: $('#endDate').val().replace('T', ' '),
     option: optionNum.toString()
   };
   args = $.param(args);
@@ -287,8 +265,8 @@ var submit_query = function(e) {
           } else { // Go from one line to two lines
             response.series.push({name: data.name2, data: data.data2, color: Highcharts.getOptions().colors[colorWheel]})
           }
-          
-        } else {
+        } 
+        else {
           response.series = response.series.slice(0,1);
           response.series[0].name = data.name;
           response.series[0].data = data.data;
@@ -296,11 +274,11 @@ var submit_query = function(e) {
         }
         
         colorWheel += 1;
-        var chart = $('#feed_main_chart').highcharts();
-        var chart = new Highcharts.Chart(response);
-        chart.title.attr({text: 'Thread' + $('#option').val() + " over Time"});
+        var series = response.series;
+        var chart = new Highcharts.StockChart(response);
+        initial_main_feed.series = series;
+        chart.title.attr({text: 'Thread ' + $('#option').val() + " over Time"});
         chart.yAxis[0].axisTitle.attr({text: $('#option').val()});
-        $('#feed_main_chart').prop('title', data.query);
   });
   return false;
 };
@@ -314,8 +292,6 @@ var submit_query_add = function(e) {
     a: $('#spanNames').val()[0],
     b: $('#domainNames').val()[0],
     c: $('#threadNames').val()[0],
-    d: $('#startDate').val().replace('T', ' '),
-    e: $('#endDate').val().replace('T', ' '),
     option: optionNum.toString()//["Page Faults", "Context Switches", "Input/Output Blocks", "CPU Time", "RSS Memory"].indexOf($('#option').val()).toString()
   };
   args = $.param(args);
@@ -328,11 +304,11 @@ var submit_query_add = function(e) {
       response.series.push({name: data.name, data: data.data, color: Highcharts.getOptions().colors[colorWheel]})
     }
     colorWheel += 1;
-    var chart = $('#feed_main_chart').highcharts();
-    var chart = new Highcharts.Chart(response);
+    var series = response.series;
+    var chart = new Highcharts.StockChart(response);
+    initial_main_feed.series = series;
     chart.yAxis[0].axisTitle.attr({text: $('#option').val()});
     chart.title.attr({text: 'Thread' + $('#option').val() + " over Time"});
-    $('#feed_main_chart').prop('title', data.query);
   });
   return false;
 };
