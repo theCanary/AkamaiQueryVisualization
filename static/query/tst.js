@@ -257,7 +257,7 @@ var submit_query = function(e) {
           response.series[0].name = data.name1;
           response.series[0].data = data.data1;
           response.series[0].color = Highcharts.getOptions().colors[colorWheel];
-          if (response.series.length > 2) { //Go from more than 2 lines to 2 lines
+          if (response.series.length > 1) { //Go from more than 2 lines to 2 lines
             response.series = response.series.slice(0,2);
             response.series[1].name = data.name2;
             response.series[1].data = data.data2;

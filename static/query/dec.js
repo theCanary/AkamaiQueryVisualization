@@ -155,12 +155,17 @@ function generate_chart() {
     xAxis: {
         type: 'datetime',
         dateTimeLabelFormats: { // don't display the dummy year
+            second: '%b %e',
+            minute: '%b %e',
+            hour: '%b %e',
+            day: '%b %e',
             month: '%e. %b',
             year: '%b'
         },
         title: {
             text: 'Date'
         },
+        ordinal: false, // TODO: essential for allowing highstocks to deal with incoming data (graph it correctly)
         minRange: 1
     },
     yAxis: {
@@ -217,11 +222,18 @@ function generate_chart() {
             }
         }
     },
-    tooltip: {
-        // headerFormat: '<b>{series.name}</b><br>',
-        pointFormat: '<span style="color:{series.color}">{series.name}</span>: <b>{point.y:.0f}</b><br/>',//'{point.x: %b/%e/%Y}: {point.y:.0f}'
-        valueDecimals: 0
-    },
+    turboThreshold: 0, //TODO this allows the chart to keep over 1000 points.
+    // tooltip: { //TODO DELETE THIS if you add flags
+    //  formatter: function() {
+    //    if "{series.type}" == 'flags':
+    //      return '{point.text}';
+    //    else:
+     //          return '<span style="color:{series.color}">{series.name}</span>: <b>{point.y:.0f}</b><br/>';
+    //     }
+    //     // headerFormat: '<b>{series.name}</b><br>',
+        // pointFormat: '<span style="color:{series.color}">{series.name}</span>: <b>{point.y:.0f}</b><br/>',//'{point.x: %b/%e/%Y}: {point.y:.0f}'
+    //     valueDecimals: 0
+    // },
     plotOptions: {
         spline: {
             marker: {
@@ -238,7 +250,9 @@ function generate_chart() {
         // },
         {
         name: 'All',
-        data: [[1435578000000.0, 370006710], [1435582200000.0, 192928248], [1435582800000.0, 169444486], [1435583100000.0, 346033501], [1435583700000.0, 667454773], [1435584000000.0, 835747835], [1435584300000.0, 2100765152], [1435584600000.0, 1116371431], [1435584900000.0, 1965781013], [1435585200000.0, 3031990322], [1435585500000.0, 4060235441], [1435585800000.0, 4645715133], [1435586100000.0, 7455624770], [1435586400000.0, 16603309372], [1435586700000.0, 19896527625], [1435587000000.0, 20588207661], [1435587300000.0, 29036973691], [1435587600000.0, 24739266075], [1435587900000.0, 22976014683], [1435588200000.0, 16437077172], [1435588500000.0, 12523185336], [1435588800000.0, 3341917244], [1435589100000.0, 830303968], [1435589400000.0, 632082965], [1435589700000.0, 512451017]]
+        id: 'dataSeries',
+        tooltip: {pointFormat: '<span style="color:{series.color}">{series.name}</span>: <b>{point.y:.0f}</b><br/>'},
+        data: []
         }
     ]
   }
@@ -248,10 +262,11 @@ var initial_main_feed = generate_chart();
 
 $(function () {
     // Create the main graph
-    // $('#feed_main_chart').highcharts(initial_main_feed);
     var series = initial_main_feed.series;
     $('#feed_main_chart').highcharts("StockChart", initial_main_feed);
     initial_main_feed.series = series;
+    submit_query()
+    drawFlags()
 });
 
 
@@ -273,10 +288,10 @@ $(function () {
     $("<p align = 'center'>List the highest: <input type='number' min='0' value='10' id='aggsetNum'> </p>").appendTo('.sub_3_chart_container');
     $("<p align = 'center'>Over the course of: <select id = 'aggsetTime'><option>All Time</option><option>Past Day</option><option>Past Week</option><option>Past Month</option><option>Past Year</option></select> </p>").appendTo('.sub_3_chart_container');
 
-    // If you click the button, this will run
-    $('#tableList').bind('click', make_table("table_name", 1, $('#tableNum').val(), $('#tableTime').val()));
-    $('#ipList').bind('click', make_table("ip", 2, $('#ipNum').val(), $('#ipTime').val()));
-    $('#aggsetList').bind('click', make_table("CONCAT(span, '.', domain)", 3, $('#aggsetNum').val(), $('#aggsetTime').val()));
+  // If you click the button, this will run
+  $('#tableList').bind('click', make_table_1);
+  $('#ipList').bind('click', make_table_2);
+  $('#aggsetList').bind('click', make_table_3);
 });
 
 /*
@@ -334,6 +349,8 @@ var submit_query_add = function(e) {
 };
 
 // Add a table displaying the scoreboard for largest amounts of rows output
+
+
 var make_table = function(column, chartNum, listLen, timeInterval) {
   $(".sub_" + chartNum + "_chart_container table").remove();
   var time = "cast(from_unixtime(unix_timestamp(time, 'yyyy/MM/dd:HH:mm:ss')) as timestamp)"
@@ -342,6 +359,7 @@ var make_table = function(column, chartNum, listLen, timeInterval) {
   var args = {
     query: "select " + column +", sum(numrows)/count(distinct time) n from dec WHERE numrows > 0 " + timespan + " group by " + column +" ORDER BY -n LIMIT " + listLen
   };
+  console.log("select " + column +", sum(numrows)/count(distinct time) n from dec WHERE numrows > 0 " + timespan + " group by " + column +" ORDER BY -n LIMIT " + listLen);
   args = $.param(args);
   $.getJSON('/_make_table_query', args, function(data) {
         var table = data.code;
@@ -349,6 +367,10 @@ var make_table = function(column, chartNum, listLen, timeInterval) {
   });
   return false;
 };
+
+var make_table_1 = function(e) {make_table("table_name", 1, $('#tableNum').val(), $('#tableTime').val())};
+var make_table_2 = function(e) {make_table("ip", 2, $('#ipNum').val(), $('#ipTime').val())};
+var make_table_3 = function(e) {make_table("CONCAT(span, '.', domain)", 3, $('#aggsetNum').val(), $('#aggsetTime').val())};
 
 
 

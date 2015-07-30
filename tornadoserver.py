@@ -33,7 +33,7 @@ ALL_SOCKETS = [] #store all client sockets here - this could get messy; figure o
 all_alerts = sortedcontainers.SortedListWithKey(key=lambda x: x["score"]) #can't leave this in fake_data, it's got state.
 
 # CHANGE THIS IF THE IMPALA DATABASE CHANGES - ashwang
-host_machine_ip_address = '198.18.55.217'
+host_machine_ip_address = '198.18.55.222'
 
 """
 Handler that carries any variables we want to toss in multiple templates at once.
@@ -134,7 +134,7 @@ def query_database(use_thread=False):
 
 """
 Table Generator!!! 
-This should take in a SQL Query (with or without the ;) with ONLY TWO columns selected and return html code for 
+This should take in a SQL Query (with or without the ;) and return html code for 
 an html table.
 """
 class TableGeneratorHandler(BaseQuery2Handler):
@@ -254,6 +254,8 @@ class QueryHandler(BaseQuery2Handler):
 		    tableName = self.get_argument('c')
 		    option = self.get_argument('option')
 		    json_data = query.mrg(cur, span, domain, tableName, option)
+	    elif table == 'flags': # Set in annotations.js
+		    json_data = query.flags(cur)
 
 	    self.write(json_data)
 
@@ -302,14 +304,61 @@ class ClientSocket(WebSocketHandler):
 				#and then write to user:
 				#self.write_message(json_data)
 				#We may have sync issues here - think about this more.
-			
+
+
+class Announcer(BaseQuery2Handler):
+	"""
+	This is what writes to the client sockets every time it receives an event. Ideally, our SparkSQL would
+	run on a cron task of some sort that pings those servers and then shoots here, which would then fire off
+	data to all the client sockets.
+	"""
+	def prepare(self):
+		"""
+		Since this socket requires JSON, this function catches all incoming requests and if they're JSON type,
+		puts then in self.json_args.
+		"""
+		if self.request.headers.get("Content-Type").startswith("application/json"):
+			#If no content-type is specified, this will crash with a 503
+			self.json_args = json.loads(self.request.body.decode("utf-8"))
+		else:
+			self.json_args = None
+
+	def post(self):
+		"""
+		When data is passed in to here via POST, it is then broadcast to all clients.
+		In the future, data about the specific feed will be used to decide which users
+		should get it, possibly via globals.
+		"""
+		##Ensure that json_data has a feed_name on it. This will let us check whether
+		#we should push something to a socket or not.
+
+		json_data = self.json_args
+		json_type = json_data["type"]
+		print "Announcer received input"
+		print json_data["data"]
+		if json_type.startswith("alerts"):
+			if json_type == "alerts_add":
+				all_alerts.update(json_data["data"])
+			elif json_type == "alerts_remove":
+				all_alerts.remove(json_data["data"][0]) #only 1 in remove requests
+		for socket in ALL_SOCKETS:
+			#if json_data["feed_name"] in socket.wanted_feeds:
+			#TODO: Make sure we actually pass this in...
+			try:
+				socket.write_message(json_data)
+			except WebSocketClosedError:
+				##if one of our sockets is closed, but still in the list
+				##remove it from our list
+				ALL_SOCKETS.remove(socket)
+		self.write("Success")	
 
 """
 Creates handlers and options for our application.
 """
 def make_application():
 	handlers = [
-		url(r"/socket/", ClientSocket),
+		url(r"/socket/", ClientSocket), # TODO
+		url(r"/pushdata/",Announcer), #TODO
 		url(r"/",DashboardHandler), #HomeHandler
 		url(r"/home/",DashboardHandler), # DEC pipeline
 		url(r"/dashboard/",DashboardHandler), # DEC pipeline
@@ -332,7 +381,7 @@ Runs the application.
 """
 def main():
 	app = make_application() #includes routes
-	app.listen(8888)
+	app.listen(80)
 	IOLoop.current().start()
 ##Python magic equivalent to including a main() method and MainClass in Java.
 if __name__ == "__main__":

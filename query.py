@@ -7,6 +7,8 @@ def check(array):
         return array
 
 def dec(cur, span, domain, thread, tableName, ipAddress):
+    cur.execute("invalidate metadata")
+    cur.execute("REFRESH dec")
 
     command = "SELECT time, sum(numrows) from dec"
     name = ""
@@ -39,6 +41,8 @@ def dec(cur, span, domain, thread, tableName, ipAddress):
     return json_data
 
 def tst(cur, span, domain, thread, numOption):
+    cur.execute("invalidate metadata")
+    cur.execute("REFRESH tst")
     
     tags = [("(Minor)", "(Major)"), ("(Voluntary)", "(Involuntary)"), ("(Input)", "(Output)"), "CPU Time", "RSS Memory"]
     options = ["sum(minorpf), sum(majorpf)", "sum(vcs), sum(ics)", "sum(input), sum(output)", "avg(cpu)", "avg(rss)"]
@@ -79,6 +83,9 @@ def tst(cur, span, domain, thread, numOption):
     return json_data
 
 def ver(cur, span, domain, multithreaded, ipAddress, aggtype, build):
+    cur.execute("invalidate metadata")
+    cur.execute("REFRESH ver")
+
     command = "SELECT CONCAT(substr(starttime,1, 10), ':', substr(starttime,14, 8)), generation from ver"
     name = ""
     command += " WHERE "
@@ -113,7 +120,8 @@ def ver(cur, span, domain, multithreaded, ipAddress, aggtype, build):
 
 
 def sql(cur, span, domain, host, client, numOption):
-    print "ok"
+    cur.execute("invalidate metadata")
+    cur.execute("REFRESH sql")
 
     ["Returned Rows", "Total Generated Rows", "Query Processing Time", "Total Elapsed Time", "Number of Interrupts", "Number of Error Messages", "Number of Distinct Error Messages", "Total Table Bytes", "Total Temp Table Bytes", "Total Table Indices", "Total Temp Table Indices"]
     options = ["sum(numrows)", "sum(total_rows)", "avg(timetoprocess_ms)", "avg(elapsed_ms)", "sum(interrupts)", "count(error_msg)", "count(distinct error_msg)", "sum(table_index_bytes)", "sum(temp_index_bytes)", "sum(num_table_indexes)", "sum(num_temp_indexes)"]
@@ -150,6 +158,8 @@ def sql(cur, span, domain, host, client, numOption):
     return json_data
 
 def got(cur, span, domain, host, client, table):
+    cur.execute("invalidate metadata")
+    cur.execute("REFRESH got")
     print "hi"
     command = "SELECT table_name, count(*) from got"
     name = ""
@@ -185,6 +195,8 @@ def got(cur, span, domain, host, client, table):
 
 
 def mrg(cur, span, domain, tableName, numOption):
+    cur.execute("invalidate metadata")
+    cur.execute("REFRESH mrg")
     #["Number of Rows Merged", "Number of Contributors"]
     options = ["sum(numrows)", "sum(contributors)"]
     selection = options[int(numOption)]
@@ -213,3 +225,26 @@ def mrg(cur, span, domain, tableName, numOption):
     print data
     json_data = {"name": name, "data": data, "query": command}
     return json_data
+
+def flags(cur):
+    cur.execute("invalidate metadata")
+    cur.execute("REFRESH flags")
+    command = """SELECT MIN(time), count(*), group_concat(CONCAT(cast(time as string), ":", roll_type)) from (select * from flags ORDER BY time) sortedFlags GROUP BY day ORDER BY day"""
+    print command
+    cur.execute(command)
+    print "executed command"
+    timeline = cur.fetchall()
+    print "fetched", timeline
+    data = [[i[0]*1000, i[1], i[2]] for i in timeline]
+    json_data = {"name": 'flags', "data": data, "query": command}
+    return json_data
+
+
+
+
+
+
+
+
+
+

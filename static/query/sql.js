@@ -145,6 +145,10 @@ function generate_chart() {
     title: {text: 'Number of Error Messages over Time'},
     xAxis: {type: 'datetime',
         dateTimeLabelFormats: { // don't display the dummy year
+            second: '%b %e',
+            minute: '%b %e',
+            hour: '%b %e',
+            day: '%b %e',
             month: '%e. %b',
             year: '%b'
         },
