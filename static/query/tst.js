@@ -138,12 +138,17 @@ function generate_chart() {
   return {
     chart: {type: 'spline', zoomType: 'x'},
     title: {text: 'Thread CPU Time over Time'},
+    ordinal: false,
     xAxis: {type: 'datetime',
         dateTimeLabelFormats: { // don't display the dummy year
+            second: '%b %e',
+            minute: '%b %e',
+            hour: '%b %e',
+            day: '%b %e',
             month: '%e. %b',
             year: '%b'
         },
-        title: {text: 'Date'},minRange: 1
+        title: {text: 'Date'},minRange: 60*1000
     },
     yAxis: { title: { text: 'CPU Time'},
         min: 0,
@@ -173,17 +178,22 @@ function generate_chart() {
                 {text: 'Graph as Area Chart',
                 onclick: function () {
                     a = $('#feed_main_chart').highcharts();
-                    for (i = 0; i < a.series.length; i++) {a.series[i].update({type: 'area'})};
+                    for (i = 0; i < a.series.length; i++) {if (a.series[i].type != 'flags') {a.series[i].update({type: 'area'})}};
                 }},
                 {text: 'Graph as Line Chart',
                 onclick: function () {
                     a = $('#feed_main_chart').highcharts();
-                    for (i = 0; i < a.series.length; i++) {a.series[i].update({type: 'line'})};
+                    for (i = 0; i < a.series.length; i++) {if (a.series[i].type != 'flags') {a.series[i].update({type: 'line'})}};
                 }},
                 {text: 'Graph as Bar Chart',
                 onclick: function () {
                     a = $('#feed_main_chart').highcharts();
-                    for (i = 0; i < a.series.length; i++) {a.series[i].update({type: 'bar'})};
+                    for (i = 0; i < a.series.length; i++) {if (a.series[i].type != 'flags') {a.series[i].update({type: 'bar'})}};
+                }},
+                {text: 'Graph as Scatter Plot',
+                onclick: function () {
+                    a = $('#feed_main_chart').highcharts();
+                    for (i = 0; i < a.series.length; i++) {if (a.series[i].type != 'flags') {a.series[i].update({type: 'scatter'})}};
                 }}]
             }
         }
@@ -194,10 +204,11 @@ function generate_chart() {
     legend: {
         enabled: true
     },
-    tooltip: {
-        pointFormat: '<span style="color:{series.color}">{series.name}</span>: <b>{point.y:.0f}</b><br/>',//'{point.x: %b/%e/%Y}: {point.y:.0f}'
-        valueDecimals: 0
-    },
+    turboThreshold: 0,
+    // tooltip: {
+    //     pointFormat: '<span style="color:{series.color}">{series.name}</span>: <b>{point.y:.0f}</b><br/>',//'{point.x: %b/%e/%Y}: {point.y:.0f}'
+    //     valueDecimals: 0
+    // },
     plotOptions: {
         spline: {
                   marker: {
@@ -224,6 +235,8 @@ function generate_chart() {
         // }
         {
             name: 'Average CPU Time',
+            id: 'dataSeries',
+            tooltip: {pointFormat: '<span style="color:{series.color}">{series.name}</span>: <b>{point.y:.0f}</b><br/>'},
             data: [[1432891800000.0, 19225500.0], [1432896300000.0, 22039600.0], [1432896900000.0, 33764375.0], [1432897200000.0, 23594650.0], [1432897800000.0, 11229750.0], [1432898100000.0, 20486525.0], [1432898400000.0, 26107650.0], [1432898700000.0, 12664625.0], [1432899000000.0, 11427966.666666666], [1432899300000.0, 22590550.0], [1432899600000.0, 7551266.666666667], [1432899900000.0, 19726100.0], [1432900200000.0, 25350550.0], [1432900500000.0, 2367950.0], [1432900800000.0, 1283150.0], [1432901100000.0, 7035250.0], [1432901400000.0, 19546833.333333332], [1432901700000.0, 12058600.0], [1432902000000.0, 8158066.666666667], [1432902300000.0, 13335050.0], [1432902600000.0, 12544966.666666666], [1432902900000.0, 9381500.0], [1432903200000.0, 28693750.0], [1432903500000.0, 12962350.0], [1432903800000.0, 10338875.0], [1432904100000.0, 9550700.0], [1432904400000.0, 32151950.0], [1432904700000.0, 15003350.0], [1432905000000.0, 5916400.0], [1432905300000.0, 15540937.5], [1432905600000.0, 16500005.555555556], [1432905900000.0, 14063858.333333334], [1432906200000.0, 15930614.285714285], [1432906500000.0, 17366730.0], [1432906800000.0, 21593137.5], [1432907100000.0, 26221887.5], [1432907400000.0, 20833316.666666668], [1432907700000.0, 20377666.666666668], [1432908000000.0, 13048296.666666666], [1432908300000.0, 17409785.0], [1432908600000.0, 18024260.714285713], [1432908900000.0, 15834842.105263159], [1432909200000.0, 14424266.666666666], [1432909500000.0, 20340910.0], [1432909800000.0, 13166975.0], [1432910100000.0, 26352450.0], [1432910400000.0, 13955100.0]]
         }
     ]
@@ -237,6 +250,7 @@ $(function () {
   var series = initial_main_feed.series;
   $('#feed_main_chart').highcharts("StockChart", initial_main_feed);
   initial_main_feed.series = series;
+  drawFlags()
 })
 
 var colorWheel = 0;
