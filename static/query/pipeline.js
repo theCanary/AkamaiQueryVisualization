@@ -4,6 +4,32 @@ Software used: Impyla, Impala, Hive, Highcharts.
 Author: Ashley Wang
 */
 
+/*
+This sets the chart window to the last however many days.
+*/
+var set_window_size = function(e) {
+  var days = 7;
+  var chart = $('#feed_main_chart').highcharts();
+  var seconds = new Date().getTime()
+  chart.xAxis[0].setExtremes(seconds-60*60*24*days*1000,seconds);
+}
+
+
+/*
+This populates the span, domain, and thread_names for all the selectors.
+This might not be necessary if there is a fixed list of all possible spans, domains, or thread_names, 
+but since new ones are being added/will be added in the future, this is just more robust.
+*/
+// var nrwrFields = [{ query: "Select distinct span from dec"}, { query: "Select distinct domain from dec"}, { query: "Select distinct thread_name from dec"}]
+// var nrwrLists = []
+// for (var i=0; i < nrwrFields.length ; i++) {
+//     args = $.param(nrwrFields[i]);
+//     $.getJSON('/_make_sql_query', args, function(data) {
+//         nrwrLists.push(data.data);
+//     });
+// }
+
+
 function Narrower(inp, sel, disp, list) {
     this.inp  = inp
     this.sel  = sel
@@ -70,8 +96,14 @@ Narrower.prototype = {
 }
 
 
+/*
+This setting draws the event flags.
+*/
+// $('#drawFlags').bind('click', drawFlags);
+
 // Add aggset rolls to the graph
 var drawFlags = function (e) {
+  console.log("drawing flags");
   var args = {
     table: 'flags'
     // a: $('#ipAddress').val()
@@ -81,7 +113,7 @@ var drawFlags = function (e) {
   $.getJSON('/_make_query', args, function(data) {
       
       points = data.data;
-      console.log(points);
+      console.log(points, "Flags");
       var chart = $('#feed_main_chart').highcharts();
       chart.addSeries(
         {

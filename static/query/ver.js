@@ -15,71 +15,6 @@ Copyright (c) 2013. All Rights reserved.
 (function (window, document, undefined) {
   'use strict'
 
-  function Narrower(inp, sel, disp, list) {
-    this.inp  = inp
-    this.sel  = sel
-    this.disp = disp
-    this.list = list
-    this.last = '' // last value on which we narrowed
-  }
-  Narrower.prototype = {
-    init : function () {
-      this.update('')
-      this.addEvents()
-    },
-    addEvents : function () {
-      var self
-      self = this
-      this.inp.addEventListener('keyup', function (e) {
-        if (this.value !== self.last) {
-          self.last = this.value
-          self.update(this.value)
-        }
-      })
-      this.inp.focus()
-    },
-    update : function (str) {
-      var ulist, rgxp
-      // optimization
-      if (0 === str.length) {
-        ulist = this.list
-      }
-      else {
-        ulist = []
-        // create rgxp
-        rgxp = new RegExp(str, 'i') // note: not Unicode-safe!
-        // keep items that match
-        for (var i = this.list.length - 1; i > -1; --i) {
-          if (null !== this.list[i].match(rgxp)) {
-            ulist.push(this.list[i])
-          }
-        }
-      }
-      this.updateSelect(ulist.sort())
-      this.updateMatches(ulist.length)
-    },
-    updateSelect : function (arr) {
-      var self, opts
-      self = this
-      this.sel.options.length = 0
-      opts = this.buildOpts(arr)
-      opts.forEach(function (opt, idx) {
-        self.sel.options[idx] = opt
-      })
-    },
-    buildOpts : function (arr) {
-      var opts
-      opts = []
-      arr.forEach(function (val) {
-        opts.push(new Option(val))
-      })
-      return opts
-    },
-    updateMatches : function (len) {
-      this.disp.innerHTML = 1 === len ? '1 match' : len + ' matches'
-    }
-  }
-
   // initialization for span form
   var inp  = document.querySelector('#nrwr')
   var sel  = document.querySelector('#spanNames')
@@ -104,19 +39,19 @@ Copyright (c) 2013. All Rights reserved.
 */
 $(function () {
     // Add table and IP input box
-    $('<p><input type="checkbox" id ="multithreaded" > Multithreaded?<br></p>').appendTo('#other');
-    $('<p><input type="text" id="ipAddress" placeholder = "IP Address" size="12" ></p>').appendTo('#other');
-    $("<p>Aggset Type: <select id = 'aggtype'><option>ALL</option><option>tla</option><option>tla/sql</option><option>sql</option> </select> </p>").appendTo('#other');
-    $("<p>Build Version: <select id = 'build'><option>ALL</option><option> 6.6.1</option></select> </p>").appendTo('#other');
+    // $('<p><input type="checkbox" id ="multithreaded" > Multithreaded?<br></p>').appendTo('#other');
+    $('<p><input type="text" id="ipAddress" class="form-control" placeholder = "IP Address" size="12" ></p>').appendTo('#other');
+    $("<p>Aggset Type: <select id = 'aggtype' class='form-control'><option>ALL</option><option>tla</option><option>tla/sql</option><option>sql</option> </select> </p>").appendTo('#other');
+    $("<p>Build Version: <select id = 'build' class='form-control'><option>ALL</option><option> 6.6.1</option></select> </p>").appendTo('#other');
 
     // Set defaults for span and domain
     $("option:contains('ALL')")[0]["selected"] = true; //span
     $("option:contains('ALL')")[1]["selected"] = true; //domain
     
     //Create and add buttons
-    $('<p>This graph is pretty useless.<br></p>').appendTo('#button_div');
-    $('<p><input type="button" id="newGraph" value = "New Graph"><br></p>').appendTo('#button_div');
-    $('<p><input type="button" id="addGraph" value = "Add Graph"><br></p>').appendTo('#button_div');
+    // $('<p>This graph is pretty useless.<br></p>').appendTo('#button_div');
+    $('<p><input type="button" id="newGraph" value = "New Graph" class="btn-primary btn"><br></p>').appendTo('#button_div');
+    $('<p><input type="button" id="addGraph" value = "Add Graph" class="btn-primary btn"><br></p>').appendTo('#button_div');
 
     // If you click the button, this will run
     $('#newGraph').bind('click', submit_query);
@@ -247,7 +182,7 @@ $(function () {
     var series = initial_main_feed.series;
     $('#feed_main_chart').highcharts("StockChart", initial_main_feed);
     initial_main_feed.series = series;
-    drawFlags()
+    // drawFlags()
 });
 
 
@@ -263,7 +198,7 @@ var submit_query = function(e) {
     table: 'ver',
     a: $('#spanNames').val()[0],
     b: $('#domainNames').val()[0],
-    c: $('#multithreaded').is(':checked'),
+    c: true,//$('#multithreaded').is(':checked'),
     d: $('#ipAddress').val(),
     e: $('#aggtype').val(),
     f: $('#build').val()
@@ -291,7 +226,7 @@ var submit_query_add = function(e) {
     table: 'ver',
     a: $('#spanNames').val()[0],
     b: $('#domainNames').val()[0],
-    c: $('#multithreaded').is(':checked'),
+    c: true, //$('#multithreaded').is(':checked'),
     d: $('#ipAddress').val(),
     e: $('#aggtype').val(),
     f: $('#build').val()

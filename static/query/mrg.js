@@ -15,71 +15,6 @@ Copyright (c) 2013. All Rights reserved.
 (function (window, document, undefined) {
   'use strict'
 
-  function Narrower(inp, sel, disp, list) {
-    this.inp  = inp
-    this.sel  = sel
-    this.disp = disp
-    this.list = list
-    this.last = '' // last value on which we narrowed
-  }
-  Narrower.prototype = {
-    init : function () {
-      this.update('')
-      this.addEvents()
-    },
-    addEvents : function () {
-      var self
-      self = this
-      this.inp.addEventListener('keyup', function (e) {
-        if (this.value !== self.last) {
-          self.last = this.value
-          self.update(this.value)
-        }
-      })
-      this.inp.focus()
-    },
-    update : function (str) {
-      var ulist, rgxp
-      // optimization
-      if (0 === str.length) {
-        ulist = this.list
-      }
-      else {
-        ulist = []
-        // create rgxp
-        rgxp = new RegExp(str, 'i') // note: not Unicode-safe!
-        // keep items that match
-        for (var i = this.list.length - 1; i > -1; --i) {
-          if (null !== this.list[i].match(rgxp)) {
-            ulist.push(this.list[i])
-          }
-        }
-      }
-      this.updateSelect(ulist.sort())
-      this.updateMatches(ulist.length)
-    },
-    updateSelect : function (arr) {
-      var self, opts
-      self = this
-      this.sel.options.length = 0
-      opts = this.buildOpts(arr)
-      opts.forEach(function (opt, idx) {
-        self.sel.options[idx] = opt
-      })
-    },
-    buildOpts : function (arr) {
-      var opts
-      opts = []
-      arr.forEach(function (val) {
-        opts.push(new Option(val))
-      })
-      return opts
-    },
-    updateMatches : function (len) {
-      this.disp.innerHTML = 1 === len ? '1 match' : len + ' matches'
-    }
-  }
-
   // initialization for span form
   var inp  = document.querySelector('#nrwr')
   var sel  = document.querySelector('#spanNames')
@@ -106,16 +41,16 @@ Add in all the options and the default settings
 $(function () {
 
     // Add query and time inputs
-    $('<p>NOTE: This field should be filled in, or the output may be nonsensical.</p><p><input type="text" id="tableNames" placeholder = "Table Name" size="12"></p>').appendTo('#option_inputs');
-    $("<p><select id = 'option'><option>Number of Rows Merged</option> <option>Number of Contributors</option></select> </p>").appendTo('#option_inputs');
+    $('<p>NOTE: This field should be filled in, or the output may be nonsensical.</p><p><input type="text" id="tableNames" class="form-control" placeholder = "Table Name" size="12"></p>').appendTo('#option_inputs');
+    $("<p><select id ='option' class='form-control'><option>Number of Rows Merged</option> <option>Number of Contributors</option></select> </p>").appendTo('#option_inputs');
 
     //Set defaults
     $("option:contains('ALL')")[0]["selected"] = true; //span
     $("option:contains('ALL')")[1]["selected"] = true; //domain
 
     //Create and add buttons
-    $('<p><input type="button" id="newGraph" value = "New Graph"><br></p>').appendTo('#button_div');
-    $('<p><input type="button" id="addGraph" value = "Add Graph"><br></p>').appendTo('#button_div');
+    $('<p><input type="button" id="newGraph" class="btn-primary btn" value = "New Graph"><br></p>').appendTo('#button_div');
+    $('<p><input type="button" id="addGraph" class="btn-primary btn" value = "Add Graph"><br></p>').appendTo('#button_div');
 
     // If you click the buttons, functions will run
     $('#newGraph').bind('click', submit_query);
@@ -283,7 +218,7 @@ $(function () {
   var series = initial_main_feed.series;
   $('#feed_main_chart').highcharts("StockChart", initial_main_feed);
   initial_main_feed.series = series;
-  drawFlags()
+  // drawFlags()
 })
 
 var colorWheel = 0;
@@ -312,7 +247,7 @@ var submit_query = function(e) {
         initial_main_feed.series = series;
         chart.title.attr({text: $('#option').val() + " over Time"});
         chart.yAxis[0].axisTitle.attr({text: $('#option').val()});
-        drawFlags()
+        // drawFlags()
         // $('#feed_main_chart').prop('title', data.query); //TODO this was bad
   });
   return false;

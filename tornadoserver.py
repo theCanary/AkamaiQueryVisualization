@@ -2,8 +2,6 @@
 Sets up a basic Tornado server application that serves a single page
 for graphs, and a JSON object containing graph data, for tests.
 """
-# impor tsys
-# sys.paths.append
 from tornado.ioloop import IOLoop
 from tornado.web import RequestHandler, Application, url, StaticFileHandler
 from tornado.websocket import WebSocketHandler, WebSocketClosedError
@@ -33,7 +31,7 @@ ALL_SOCKETS = [] #store all client sockets here - this could get messy; figure o
 all_alerts = sortedcontainers.SortedListWithKey(key=lambda x: x["score"]) #can't leave this in fake_data, it's got state.
 
 # CHANGE THIS IF THE IMPALA DATABASE CHANGES - ashwang
-host_machine_ip_address = '198.18.55.222'
+impala_host_ip_address = '198.18.55.222'
 
 """
 Handler that carries any variables we want to toss in multiple templates at once.
@@ -140,7 +138,7 @@ an html table.
 class TableGeneratorHandler(BaseQuery2Handler):
 	@query_database(use_thread=True)
 	def get(self):
-	    conn = connect(host = host_machine_ip_address, port=21050)
+	    conn = connect(host = impala_host_ip_address, port=21050)
 	    cur = conn.cursor()
 	    command = self.get_argument('query')
 	    if "drop" in command.lower():
@@ -168,7 +166,7 @@ that can be graphed or presented as a table.
 class SQLQueryHandler(BaseQuery2Handler):
 	@query_database(use_thread=True)
 	def get(self):
-	    conn = connect(host = host_machine_ip_address, port=21050)
+	    conn = connect(host = impala_host_ip_address, port=21050)
 	    cur = conn.cursor()
 	    command = self.get_argument('query')
 	    if "drop" in command.lower():
@@ -192,7 +190,7 @@ class QueryHandler(BaseQuery2Handler):
 	@query_database(use_thread=True)
 	def get(self):
 	    # Setup
-	    conn = connect(host = host_machine_ip_address, port=21050)
+	    conn = connect(host = impala_host_ip_address, port=21050)
 	    cur = conn.cursor()
 
 	    table = self.get_argument('table')

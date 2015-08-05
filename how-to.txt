@@ -1,13 +1,31 @@
 /************************************************************
+I need to connect to a different Impala cluster!
+************************************************************/
+
+Before you do anything you need to set up the other Impala cluster with access to HDFS:
+	See awang_impala_installation_notes.txt
+
+In tornadoserver.py:
+	Look for 'impala_host_ip_address' and change the variable assignment to the new IP address.
+
+/************************************************************
+I need to listen to a different port than 80!
+************************************************************/
+
+In tornadoserver.py:
+	Look for app.listen(80) and change it to the port you want.
+
+
+/************************************************************
 How to add a new data visualization page for a new pipeline:
 ************************************************************/
 
 Before you do anything you need:
-	1) All the previous QueryVisualization code (in QueryVisualization.zip or on root@198.18.55.216:/home/awang/QueryVisualization)
+	1) All the previous QueryVisualization code (in QueryVisualization.zip or on root@198.18.55.222:/home/awang/QueryVisualization)
 	2) Add a new folder to the HDFS /ghostcache/<tag> where <tag> is the name of the pipeline (ex: DEC, VER, TST)
 		- Ex: Check to see if it succeeded with /a/bin/hadoop dfs -ls /ghostcache/mrg/ where mrg 
 	3) Add all the files in to the folder. (In general they should be space separated, or else you have to edit the table generating code)
-	4) Generate the table in Impala in 198.18.55.221 with the following format:
+	4) Generate the table in Impala in 198.18.55.222 with the following format:
 		DROP TABLE IF EXISTS mrg;
 		CREATE EXTERNAL TABLE mrg
 		(
@@ -58,12 +76,6 @@ In query.py
 7) Add function to generate an SQL command from these arguments, and execute the command by connecting to Impala
 		- MAKE SURE that the arguments DON'T contain 'self', because the function is NO LONGER IN THE GET() function
 		- Make sure when calling, use query.<function name> to call the function, since it's imported.
-				
-
-
-
-
-
 
 
 

@@ -1,3 +1,5 @@
+# This is a test file to show that it is possible to push data to an open websocket by POSTing to a websocket.
+
 import requests
 import random
 import json
@@ -29,21 +31,7 @@ CONFIG = {}
 
 breakpoints = [{"start":1432924249,"end":1432924257}]
 def create_line_chart_data(feed_name="",stop_counter=False,field_name=""):
-	"""
-	Creates random line graph data and pushes it to our tornado server, such that
-	we can test websocket functionality.
-	Feed_name carries with it the name of the feed we want to push to.
-	stop_counter stops the iteration of the counter, to be pushed later manually. This is done to synchronize random feeds.
-	field_name keeps a randomized "field name", e.g. "DNS lookups" so that we can add this information to our feed display
-	in order to test the way we do these displays in the first place.
-
-	Arguments:
-		feed_name: Feed where this data will be displayed (e.g. "main", "subfeed_1")
-		stop_counter: Whether to skip the counter increment (used for when we render 4 graphs at once)
-		field_name: Name of this fake column
-	"""
 	data = {"data":[], "type": "feed_main_chart"}
-	global GLOBAL_COUNTER #This is just a test application, relax...
 
 	headers = {"Content-Type":"application/json"}
 	i = 1
@@ -56,15 +44,3 @@ def create_line_chart_data(feed_name="",stop_counter=False,field_name=""):
 
 	# r = requests.post("http://"+CONFIG["server_address"]+":"+CONFIG["server_port"]+"/pushdata/",headers=headers,data=json.dumps(data))	
 	# r = requests.post("http://198.18.55.216:8888/pushdata/",headers=headers,data=json.dumps(data))
-
-
-def step_counter():
-	"""Steps the counter forward. Used in conjunction with the stop_counter parameter in the random creation functions."""
-	global GLOBAL_COUNTER
-	GLOBAL_COUNTER += STEP_SIZE
-
-# def setup(data_path):
-# 	"""Sets up environment variables for the rest of the functions here."""
-# 	transform_data.get_conf_data(data_path,CONFIG)
-
-create_line_chart_data("feed_main_chart", True, "random")

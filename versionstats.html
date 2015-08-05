@@ -15,28 +15,26 @@
 			<h1>Query Settings</h1>
 			<p>Type in the Network and Domain boxes to narrow down the list of possible aggsets, and select the field you want to limit your query by. To limit by table or IP Address, type the full name or value in the text field. Otherwise, leave it completely blank. </p>
 			<p>Queries may take over 30 seconds to render, so please be patient!</p>
-			<p>
-			  <div id="option_inputs" column-count:"3">
-			    <form id = "span" style = "position: relative; float: left; width: 33%;">
-			        <p><input type="text" id="nrwr" placeholder = "Network" size="12"></p>
-			        <p>
-			            <span id="spanMatches"></span><br>
-			            <select id="spanNames" multiple size="5"></select>
-			        </p>
-			    </form>
-			  	<form id = "domain" style = "position: relative; float: left; width: 33%;">
-			        <p><input type="text" id="nrwr2" placeholder = "Domain" size="12"></p>
-			        <p>
-			            <span id="domainMatches"></span><br>
-			            <select id="domainNames" multiple size="5"></select>
-			        </p>
-			    </form>
-			  	<form id = "other" style = "position: relative; float: left; width: 33%;">
-			    </form>
-			  </div>
-			</p>
+			<div id="option_inputs" column-count:"3" class = "col-sm-12 col-md-12" >
+				<form id = "span" style = "position: relative; float: left; width: 33%;">
+				    <p><input type="text" id="nrwr" class="form-control" placeholder = "Network" size="12"></p>
+				    <p>
+				        <span id="spanMatches"></span><br>
+				        <select id="spanNames" class="form-control" multiple size="5"></select>
+				    </p>
+				</form>
+					<form id = "domain" style = "position: relative; float: left; width: 33%;">
+				    <p><input type="text" id="nrwr2" class="form-control" placeholder = "Domain" size="12"></p>
+				    <p>
+				        <span id="domainMatches"></span><br>
+				        <select id="domainNames" class="form-control" multiple size="5"></select>
+				    </p>
+				</form>
+					<form id = "other" style = "position: relative; float: left; width: 33%;">
+				</form>
+			</div>
 			<br>
-			<div id="button_div"> </div>
+			<div id="button_div" class = "col-sm-12 col-md-12"> </div>
 		</div>
 	</div>
 	{%comment Now for a second row, this is where all the smaller graphs live %} 

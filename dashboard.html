@@ -6,45 +6,51 @@
 
 <div class="container-fluid">
 	<div class="row">
-		<div class="col-sm-7 col-md-7 main chart_container main_chart_container" width ="100%">
+		<div class="col-sm-12 col-md-12 main chart_container main_chart_container" width ="100%">
 		{% comment Here goes the main graph (main feed) %}
 			<h1 class="page-header">Table Size Over Time</h1>
 			<p>This data is pulled from the <a href = 'https://docs.akamai.com/syscomm/query/internal/design/DDC-parser-query/LogFeatureMapping.html'> DEC pipeline</a>, which logs information from every table decoded from every connection to the aggregator providing table data. </p>
-			<div id="feed_main_chart"  style="min-width: 310px; height: 500px; margin: 0 auto; overflow: scroll;"></div>
-		</div>
-		<div class="col-sm-5 col-md-5 main">
-			<h1>Query Settings</h1>
-			<p>Type in the Network and Domain boxes to narrow down the list of possible aggsets, and select the field you want to limit your query by. To limit by table or IP Address, type the full name or a partial name followed by a * in the text field. </p>
-			<p>If we query the dec table directly, it will take around 30 minutes to render the data. If we query an optimized view of dec, dec_opt, the query returns in around 30 seconds but at the cost of some larger queries (can't leave all the narrowing fields blank).</p>
+
 			<p>
-			  <div id="option_inputs" column-count:"3">
-			    <form id = "span" style = "position: relative; float: left; width: 33%;">
-			        <p><input type="text" id="nrwr" placeholder = "Network" size="12"></p>
-			        <p>
-			            <span id="spanMatches"></span><br>
-			            <select id="spanNames" multiple size="5"></select>
-			        </p>
+			  <div class="messagepop pop">
+			    <form method="post" id="new_message" action="/messages">
+					<h2>Query Settings</h2>
+					<p>Type in the Network and Domain boxes to narrow down the list of possible aggsets, and select the field you want to limit your query by. To limit by table or IP Address, type the full name or a partial name followed by a * in the text field. </p>
+
+					<div id = "span" style = "position: relative; float: left; width: 33%;">
+					    <p><input type="text" id="nrwr" class="form-control" placeholder = "Network" size="12"></p>
+					    <p>
+					        <span id="spanMatches"></span><br>
+					        <select id="spanNames" class="form-control" multiple size="5"></select>
+					    </p>
+					</div>
+					<div id = "domain" style = "position: relative; float: left; width: 33%;">
+					    <p><input type="text" class="form-control" id="nrwr2" placeholder = "Domain" size="12"></p>
+					    <p>
+					        <span id="domainMatches"></span><br>
+					        <select id="domainNames" class="form-control" multiple size="5"></select>
+					    </p>
+					</div>
+					<div id = "thread" style = "position: relative; float: left; width: 33%;">
+							<p><input type="text" id="nrwr3" class="form-control" placeholder = "Thread" size="12"></p>
+					    <p>
+					        <span id="threadMatches"></span><br>
+					        <select id="threadNames" class="form-control" multiple size="5"></select>
+					    </p>
+					</div>
+					<div id = "other" class = "col-sm-6 col-md-6" > </div>
+					<div id="button_div" class = "col-sm-6 col-md-6" > </div>
+					<div><a class="close">Cancel</a></div>
+			        
 			    </form>
-			  	<form id = "domain" style = "position: relative; float: left; width: 33%;">
-			        <p><input type="text" id="nrwr2" placeholder = "Domain" size="12"></p>
-			        <p>
-			            <span id="domainMatches"></span><br>
-			            <select id="domainNames" multiple size="5"></select>
-			        </p>
-			    </form>
-			    <form id = "thread" style = "position: relative; float: left; width: 33%;">
-			  		<p><input type="text" id="nrwr3" placeholder = "Thread" size="12"></p>
-			        <p>
-			            <span id="threadMatches"></span><br>
-			            <select id="threadNames" multiple size="5"></select>
-			        </p>
-			    </form>
-			  	<!-- <form id = "other" style = "position: relative; float: left; width: 33%;">
-			    </form> -->
 			  </div>
 			</p>
-			<div id = "other" class = "col-sm-6 col-md-6" > </div>
-			<div id="button_div" class = "col-sm-6 col-md-6" > </div>
+			<div class="col-sm-6 col-md-6" width ="100%"><input type="button" id="querySettings" class="form-control" value = "Filter - Query Settings"><br></div>
+			<div class="col-sm-6 col-md-6" width ="100%"><input type="button" id="drawFlags" class="form-control" value = "Display Aggset Rolls as Events"><br></div>
+			
+			{%comment This is where the container for the main chart goes %}
+			<div id="feed_main_chart"  style="min-width: 310px; height: 500px; margin: 0 auto; overflow: scroll;"></div>
+			
 		</div>
 	</div>
 	{%comment Now for a second row, this is where all the smaller graphs live %} 

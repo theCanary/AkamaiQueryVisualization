@@ -15,71 +15,6 @@ Copyright (c) 2013. All Rights reserved.
 (function (window, document, undefined) {
   'use strict'
 
-  function Narrower(inp, sel, disp, list) {
-    this.inp  = inp
-    this.sel  = sel
-    this.disp = disp
-    this.list = list
-    this.last = '' // last value on which we narrowed
-  }
-  Narrower.prototype = {
-    init : function () {
-      this.update('')
-      this.addEvents()
-    },
-    addEvents : function () {
-      var self
-      self = this
-      this.inp.addEventListener('keyup', function (e) {
-        if (this.value !== self.last) {
-          self.last = this.value
-          self.update(this.value)
-        }
-      })
-      this.inp.focus()
-    },
-    update : function (str) {
-      var ulist, rgxp
-      // optimization
-      if (0 === str.length) {
-        ulist = this.list
-      }
-      else {
-        ulist = []
-        // create rgxp
-        rgxp = new RegExp(str, 'i') // note: not Unicode-safe!
-        // keep items that match
-        for (var i = this.list.length - 1; i > -1; --i) {
-          if (null !== this.list[i].match(rgxp)) {
-            ulist.push(this.list[i])
-          }
-        }
-      }
-      this.updateSelect(ulist.sort())
-      this.updateMatches(ulist.length)
-    },
-    updateSelect : function (arr) {
-      var self, opts
-      self = this
-      this.sel.options.length = 0
-      opts = this.buildOpts(arr)
-      opts.forEach(function (opt, idx) {
-        self.sel.options[idx] = opt
-      })
-    },
-    buildOpts : function (arr) {
-      var opts
-      opts = []
-      arr.forEach(function (val) {
-        opts.push(new Option(val))
-      })
-      return opts
-    },
-    updateMatches : function (len) {
-      this.disp.innerHTML = 1 === len ? '1 match' : len + ' matches'
-    }
-  }
-
   // initialization for span form
   var inp  = document.querySelector('#nrwr')
   var sel  = document.querySelector('#spanNames')
@@ -105,11 +40,11 @@ Add in all the options and the default settings
 */
 $(function () {
     // Add query and time inputs
-    $('<p><input type="text" id="host" placeholder = "Host name" size="12" ></p>').appendTo('#other');
-    $('<p><input type="text" id="client" placeholder = "Client" size="12" ></p>').appendTo('#other');
+    $('<div><input type="text" id="host" class="form-control" placeholder = "Host name" size="12" ></div>').appendTo('#other');
+    $('<div><input type="text" id="client" class="form-control" placeholder = "Client" size="12" ></div>').appendTo('#other');
     $('<p>The following is only for the GOT pipeline: </p>').appendTo('#other');
-    $('<p><input type="text" id="table" placeholder = "Table" size="12" ></p>').appendTo('#other');
-    $("<p><select id = 'option'><option>Returned Rows</option><option>Total Generated Rows</option>" +
+    $('<div><input type="text" id="table" class="form-control" placeholder = "Table" size="12" ></div>').appendTo('#other');
+    $("<p><select id = 'option'  class='form-control'><option>Returned Rows</option><option>Total Generated Rows</option>" +
       "<option>Query Processing Time</option> <option>Total Elapsed Time</option> <option>Number of Interrupts</option>" +
       "<option>Number of Error Messages</option><option>Number of Distinct Error Messages</option>" +
       "<option>Total Table Bytes</option> <option>Total Temp Table Bytes</option> <option>Total Table Indices</option> " +
@@ -121,11 +56,11 @@ $(function () {
 
     //Create and add buttons
     $('<p>Click these to graph query stats data from the SQL pipeline</p>').appendTo('#sql_button_div');
-    $('<p><input type="button" id="newGraph" value = "New Graph"><br></p>').appendTo('#sql_button_div');
-    $('<p><input type="button" id="addGraph" value = "Add Graph"><br></p>').appendTo('#sql_button_div');
+    $('<p><input type="button" id="newGraph" class="btn-primary btn" value = "New Graph"><br></p>').appendTo('#sql_button_div');
+    $('<p><input type="button" id="addGraph" class="btn-primary btn" value = "Add Graph"><br></p>').appendTo('#sql_button_div');
     
     $('<p>Click to graph table data from the GOT pipeline, showing the top tables with the largest amount of queries.</p>').appendTo('#got_button_div');
-    $('<p><input type="button" id="newGraphGOT" value = "New Graph"><br></p>').appendTo('#got_button_div');
+    $('<p><input type="button" id="newGraphGOT" class="btn-primary btn" value = "New Graph"><br></p>').appendTo('#got_button_div');
     // $('<p><input type="button" id="addGraphGOT" value = "Add Graph"><br></p>').appendTo('#got_button_div');
 
     // If you click the buttons, functions will run
@@ -313,7 +248,7 @@ $(function () {
   var series = initial_main_feed.series;
   $('#feed_main_chart').highcharts("StockChart", initial_main_feed);
   initial_main_feed.series = series;
-  drawFlags()
+  // drawFlags()
 })
 
 var colorWheel = 1;
@@ -347,7 +282,7 @@ var submit_query = function(e) {
       unit += " (ms)"
     }
     chart.yAxis[0].axisTitle.attr({text: $('#option').val() + unit});
-    drawFlags()
+    // drawFlags()
   });
   return false;
 };
@@ -420,7 +355,7 @@ var submit_query_GOT = function(e) {
     response.series = series;
     $('#feed_main_chart').highcharts(response) //Due to the nature of this graph, we don't use the navigator bar
     got_main_feed.series = series;
-    drawFlags()
+    // drawFlags()
   });
   return false;
 };

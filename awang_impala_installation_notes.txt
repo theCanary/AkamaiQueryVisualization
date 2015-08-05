@@ -1,0 +1,192 @@
+How to install Impala on an Akamai machine
+Cpu Info:
+  Model: Intel(R) Xeon(R) CPU E31270 @ 3.40GHz
+  Cores: 8
+
+
+General plan:
+	Use sudo apt-get install for everything
+
+Bug fixes:
+
+PROBLEM: Memory was an issue (df -h had sda/dev1 at ~100%)
+SOLUTION:
+free up space
+commands:
+sudo apt-get clean
+sudo apt-get autoclean
+sudo apt-get autoremove
+
+sudo apt-get -f install
+
+
+
+PROBLEM: sudo apt-get install impala had no idea where the sources were
+SOLUTION:
+give them the source list
+commands:
+cd /etc/apt/sources.list.d/ wget http://archive-primary.cloudera.com/cdh5/debian/wheezy/amd64/cdh/cloudera.list
+
+sudo apt-get update sudo apt-get -f install
+sudo apt-get -f install impala
+
+For one, you can do:
+sudo apt-get install impala-shell
+
+ 
+ 
+PROBLEM: If impalad doesn't find JAVA_HOME
+SOLUTION: Source /a/etc/akamai.conf
+
+cp /a/etc/akamai.conf /etc/default/bigtop-utils
+
+
+
+
+ 
+PROBLEM: Impala has no configuration files / can’t connect to Hadoop DFS
+SOLUTION:
+cd /a/third-party/hbase/conf
+cp core-site.xml /etc/impala/conf/
+cp hbase-site.xml /etc/impala/conf/
+cp hdfs-site.xml /etc/impala/conf/
+ 
+cd /a/third-party/hive/conf
+cp hive-site.xml /etc/impala/conf
+ 
+ 
+
+PROBLEM:
+ERROR:
+Impala cannot read or execute the parent directory of dfs.domain.socket.path
+http://www.cloudera.com/content/cloudera/en/documentation/cloudera-impala/v2-0-x/topics/impala_config_performance.html
+In hdfs-site.xml:
+<property>     <name>dfs.client.read.shortcircuit</name>     <value>true</value> </property>
+<property>     <name>dfs.domain.socket.path</name>     <value>/var/run/hdfs-sockets/dn</value> </property>
+<property>     <name>dfs.client.file-block-storage-locations.timeout.millis</name>     <value>10000</value> </property>
+
+On just 1 machine:
+sudo service impala-state-store start
+sudo apt-get install impala-catalog
+sudo service impala-catalog start
+sudo service impala-server start
+https://groups.google.com/a/cloudera.org/forum/#!topic/impala-user/226gJm7ydRU
+ 
+SUCCESS: on 216, running both the state-store and catalog, impala-shell can work
+
+
+
+PROBLEM: other machines can’t connect to the machine running the state-store/catalog
+ERROR:
+statestore-subscriber.cc:209] statestore registratio
+n unsuccessful: Couldn't open transport for localhost:24000 (connect() failed: C
+onnection refused)
+E0716 17:18:36.098731 24626 impalad-main.cc:79] Impalad services did not start c
+orrectly, exiting.  Error: Couldn't open transport for localhost:24000 (connect(
+) failed: Connection refused)
+ 
+TEMP BAD SOLUTION:
+TO SET UP THE CLUSTER
+In /etc/default/impala
+ change CATALOG_SERVICE_HOST=fqdn_to_your_catalog_host
+ 
+
+
+PROBLEMS:
+https://groups.google.com/a/cloudera.org/forum/#!topic/impala-user/gKVHQBmGA2c
+http://grokbase.com/t/cloudera/impala-user/144y4mr82a/impala-1-2-4-this-impala-daemon-is-not-ready-to-accept-user-requests
+http://www.cloudera.com/content/cloudera/en/documentation/cloudera-impala/latest/topics/impala_config_options.html
+ 
+Temp solution:
+nohup impalad --state_store_host=198.18.55.216  &
+On all the machines!
+
+ 
+
+PROBLEM:
+ERROR: NullPointerException: null
+When trying to execute a command
+ 
+http://stackoverflow.com/questions/20533355/impala-1-2-1-error-couldnt-open-transport-for-localhost26000connect-failed
+SOLUTION:
+nohup impalad --state_store_host=198.18.55.216 -catalog_service_host=a198-18-55-216.deploy.akamaitechnologies.com &
+on all machines
+
+THIS WORKS!
+ 
+ 
+
+UNRESOLVED PROBLEM:
+EXCEPT NOT IN ONE CASE!
+create view dec_opt as select time, name, table_name, ip, span, domain, sum(numrows) numrows from dec GROUP BY time, name, table_name, ip, span, domain;
+ 
+WHEN TRYING TO QUERY DEC_OPT IN IMPALA-SHELL
+ 
+posix_fallocate(262, 1610612736, 8388501) failed for file /tmp/impala-scratch/c5440fb69ae057ab:4e4e3e51d76fa8c_6da836db-18ab-49f5-8168-c337899bd875 with returnval=28 description= (1 of 2 similar)
+
+
+
+
+
+WHEN INSTALLING IMPALA SHELL
+
+POTENTIAL PROBLEM: impala-shell : Depends: python-setuptools
+
+Sudo apt-get -f install python-setuptools doesn't work
+So I figured this out eventually, it turns out the my Ubuntu distribution was missing a lot of stuff in the /etc/apt/sources.list.d directory.
+
+To get the sources for the Cloudera Impala installation:
+wget http://archive.cloudera.com/impala/ubuntu/precise/amd64/impala/cloudera.list
+
+Another place to get it is:
+wget http://archive-primary.cloudera.com/cdh5/debian/wheezy/amd64/cdh/cloudera.list
+
+(I'm not sure what the difference between the two is, for all I know both work)
+
+And then I had to go to http://repogen.simplylinux.ch/generate.php and generate the proper sources.list file, which ended up being:
+
+#------------------------------------------------------------------------------#
+#                            OFFICIAL UBUNTU REPOS                             #
+#------------------------------------------------------------------------------#
+
+
+###### Ubuntu Main Repos
+deb http://us.archive.ubuntu.com/ubuntu/ precise main restricted 
+deb-src http://us.archive.ubuntu.com/ubuntu/ precise main restricted 
+
+###### Ubuntu Update Repos
+deb http://us.archive.ubuntu.com/ubuntu/ precise-security main restricted 
+deb http://us.archive.ubuntu.com/ubuntu/ precise-updates main restricted 
+deb-src http://us.archive.ubuntu.com/ubuntu/ precise-security main restricted 
+deb-src http://us.archive.ubuntu.com/ubuntu/ precise-updates main restricted 
+
+
+Then, I just ran
+
+sudo apt-get update
+
+sudo apt-get -f install python-setuptools
+
+sudo apt-get -f install impala-shell
+
+and it worked!!!
+
+
+
+
+PROBLEM:
+Create file /tmp/impala-scratch/574edd408829b710:5a9541634e8f7b8d_4acc0fa1-be52-4aee-b841-0920ab404f1d failed with errno=13 description=Error(13): Permission denied
+
+
+SOLUTION:
+/tmp/impala-scratch has access permissions:
+drwxr-xr-x
+http://stackoverflow.com/questions/28753538/hiveserver2-failed-to-create-change-scratchdir-permissions-to-777-could-not-cr
+
+According to this, change chmod -R 777 /tmp/impala-scratch/
+
+
+
+
+ 
+ 

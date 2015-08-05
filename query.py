@@ -1,5 +1,6 @@
 import datetime
 
+# In some cases you need to perform this additional check.
 def check(array):
     if len(array) == 0:
         return [[]]
@@ -21,7 +22,7 @@ def dec(cur, span, domain, thread, tableName, ipAddress):
         command += "domain = '" + domain + "' and "
     if thread != "ALL":
     	name += thread + " "
-    	command += "name LIKE '%" + thread + "%' and "
+    	command += "thread_name LIKE '%" + thread + "%' and "
     if tableName != "":
     	name += tableName + " "
         command += "table_name = '" + tableName + "' and "

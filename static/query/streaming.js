@@ -53,8 +53,3 @@ ws.onmessage = function(event) {
 window.addEventListener("beforeunload", function(event) {
 	ws.close();
 });
-
-// var graphs_present = $(".chart").length > 0; //NOTE: Only open sockets if we have something to do with them. Update this boolean if more use cases arise. 
-// if (graphs_present) {
-	
-// }
