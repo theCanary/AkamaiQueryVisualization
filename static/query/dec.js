@@ -309,6 +309,14 @@ var submit_query = function(e) {
         var chart = new Highcharts.StockChart(response);
         initial_main_feed.series = series;
   });
+  // Open a socket to listen for any updates
+  var decws = open_websocket("/socket/");
+  ws.onmessage = function(event) {
+        var res_data = JSON.parse(event.data); //messages are objects, not pure JSON
+        data = [res_data.data];
+        console.log("Streaming data input received : " + data);
+  }
+
   return false;
 };
 

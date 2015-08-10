@@ -1,0 +1,37 @@
+How to do ANI installs on an Akamai machine:
+
+
+Just follow everything here:
+https://agora.akamai.com/wiki/ANI_User_Guide#Quickstart_Guide_-_How_to_Run_Your_First_Install
+
+
+Specifically for installing a non-HA namenode or converting a non-HA namenode to a HA Namenode, follow the instructions here:
+https://agora.akamai.com/wiki/BART:Version_cloudera-hadoop:5.0.0
+
+
+Naming conventions when requesting an install: (https://ani.akamai.com/ani.pl?screen=request)
+
+Release File:
+Release Name - {username}_(description)
+Own - login name
+Version file - perforce link
+ 
+Configuration File:
+Description: DQ: [Component Names]+ on [IP addresses]
+	Ex: DQ: Presto+CDH+Yarn-HA on 198.18.55.{210,211,212,213,214}
+Release: {username}-{description}
+	Ex: gpapageo-presto-cdh-infra-7661
+Config: nss1 infra - /docs/syscomm/nss/testnets/configurations/configuration.nss1.infra
+IP - comma separated list of IP's
+	BE CAREFUL ABOUT THIS
+	YOU COULD WIPE OUT MACHINES YOU DON'T OWN
+	AND POSSIBLE GET HUNTED DOWN AND EATEN
+Install Type:
+	Standard Incremental - changes nothing except for what's new
+	Kernel & Incremental - installs everything on a fresh OS install
+	OS - wipes out machine and installs an OS that is suitable to the config file
+Run CDP:
+	In general, check both the pre and post. Just because.
+
+Everything else don't touch.
+ 

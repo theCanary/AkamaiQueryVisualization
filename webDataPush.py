@@ -33,17 +33,16 @@ breakpoints = [{"start":1432924249,"end":1432924257}]
 def create_line_chart_data(feed_name="",stop_counter=False,field_name=""):
 	data = {"data":[], "type": "feed_main_chart"}
 
-	headers = {"Content-Type":"application/json", "Upgrade": "websocket",
-            "Connection": "Upgrade"}
+	headers = {"Content-Type":"application/json"}
 	i = 1
 	while True:
 		i += 1
 		data['data'] = [1435589700000.0 + i*100000000, random.randint(5,1e10)]
 		print data
-		r = requests.post("http://198.18.55.222:80/pushdata/",headers=headers,data=json.dumps(data))
+		r = requests.post("https://query2logs.default.abattery.appbattery.nss1.tn.akamai.com/pushdata/",headers=headers,data=json.dumps(data), verify=False)
 		time.sleep(2)
 
 	# r = requests.post("http://"+CONFIG["server_address"]+":"+CONFIG["server_port"]+"/pushdata/",headers=headers,data=json.dumps(data))	
 	# r = requests.post("http://198.18.55.216:8888/pushdata/",headers=headers,data=json.dumps(data))
 
-create_line_chart_data()
+create_line_chart_data();

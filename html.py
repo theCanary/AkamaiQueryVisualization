@@ -33,7 +33,7 @@ def prettyTable(dictionary, cssClass=''):
         return '\n'.join(s)
 
 def prettyDatabase(array, cssClass=''):
-        ''' pretty prints an array into an HTML table(s) '''
+        ''' pretty prints [ian array into an HTML table(s) '''
         if isinstance(array, str):
             return '<td>' + array + '</td>'
         s = ['<table border = "2px solid black" align="center"']

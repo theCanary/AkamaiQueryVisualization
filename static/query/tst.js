@@ -228,7 +228,7 @@ var submit_query = function(e) {
         initial_main_feed.series = series;
         chart.title.attr({text: 'Thread ' + $('#option').val() + " over Time"});
         chart.yAxis[0].axisTitle.attr({text: $('#option').val()});
-        drawFlags();
+        //drawFlags();
   });
   return false;
 };

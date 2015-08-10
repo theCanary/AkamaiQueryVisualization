@@ -19,16 +19,8 @@ import sortedcontainers #for fake data. TODO: remove when we have a real DB!
 from flask import Flask, jsonify, json, render_template, request
 from concurrent.futures import ThreadPoolExecutor
 
-##THE BELOW VARIABLES ARE FOR DEVELOPMENT
-GLOBAL_COUNTER = 1432924245 #starts the testing graphs at a particular epoch time
-STEP_SIZE = 10 #how far we go each "step" in our graph update
-##Boundary values for random data:
-MIN_INT = 5
-MAX_INT = 40
-DEBUG = True #Currently unused. Set such that we can start server in debug mode. Maybe add an optparse for this?
-##THESE ARE FOR REAL
 ALL_SOCKETS = [] #store all client sockets here - this could get messy; figure out a better way
-all_alerts = sortedcontainers.SortedListWithKey(key=lambda x: x["score"]) #can't leave this in fake_data, it's got state.
+# all_alerts = sortedcontainers.SortedListWithKey(key=lambda x: x["score"]) #can't leave this in fake_data, it's got state.
 
 # CHANGE THIS IF THE IMPALA DATABASE CHANGES - ashwang
 impala_host_ip_address = '198.18.55.222'
@@ -269,8 +261,14 @@ below code thanks to: http://blog.kagesenshi.org/2011/10/simple-websocket-push-s
 The actual socket created by the user. 
 """
 class ClientSocket(WebSocketHandler):
+
+	def check_origin(self, origin):
+		return True
+
 	def open(self):
+		print("Attempting to open socket")
 		ALL_SOCKETS.append(self) #add the socket to our list of current open sockets
+		print("Added socket to global list")
 		self.wanted_feeds = set() #So that we can add or remove as many feeds as we want
 		#Right now you can't change which feeds are displayed on your main page
 		#without going to the Settings page; so we can rely on socket closing to change this
@@ -381,6 +379,7 @@ def main():
 	app = make_application() #includes routes
 	app.listen(80)
 	IOLoop.current().start()
+	
 ##Python magic equivalent to including a main() method and MainClass in Java.
 if __name__ == "__main__":
 	main()

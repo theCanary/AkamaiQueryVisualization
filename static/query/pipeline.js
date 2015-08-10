@@ -96,9 +96,7 @@ Narrower.prototype = {
 }
 
 
-/*
-This setting draws the event flags.
-*/
+
 // $('#drawFlags').bind('click', drawFlags);
 
 // Add aggset rolls to the graph

@@ -27,18 +27,15 @@ function open_websocket(relative_path) {
 			new_uri += loc.pathname + "/" + relative_path;
 		}
 	}
+	console.log(new_uri);
 	return new WebSocket(new_uri);
 }
 
-var ws = open_websocket("/socket/");	
+var ws = open_websocket("/socket/");
 //TODO: Send a message so that we only listen to stuff we care about! Otherwise we get in trouble when many users are connected
 //This ws onmessage declaration handles all our data types.
 ws.onmessage = function(event) {
-	//TODO CHANGE THIS TO HIGHCHARTS
 	var res_data = JSON.parse(event.data); //messages are objects, not pure JSON
-	
-	// console.log(res_data);
-	// response = generate_chart();
 	data = [res_data.data];
     console.log("Streaming data input received : " + data);
     var chart = $('#feed_main_chart').highcharts();
