@@ -199,7 +199,7 @@ def mrg(cur, span, domain, tableName, numOption):
     cur.execute("invalidate metadata")
     cur.execute("REFRESH mrg")
     #["Number of Rows Merged", "Number of Contributors"]
-    options = ["sum(numrows)", "sum(contributors)"]
+    options = ["sum(numrows)", "sum(contributors)", "avg(elapsed_ms)"]
     selection = options[int(numOption)]
 
     command = "SELECT time, "+ selection + " from mrg"

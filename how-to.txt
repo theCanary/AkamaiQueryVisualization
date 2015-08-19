@@ -1,20 +1,3 @@
-/************************************************************
-I need to connect to a different Impala cluster!
-************************************************************/
-
-Before you do anything you need to set up the other Impala cluster with access to HDFS:
-	See awang_impala_installation_notes.txt
-
-In tornadoserver.py:
-	Look for 'impala_host_ip_address' and change the variable assignment to the new IP address.
-
-/************************************************************
-I need to listen to a different port than 80!
-************************************************************/
-
-In tornadoserver.py:
-	Look for app.listen(80) and change it to the port you want.
-
 
 /************************************************************
 How to add a new data visualization page for a new pipeline:
@@ -24,7 +7,8 @@ Before you do anything you need:
 	1) All the previous QueryVisualization code (in QueryVisualization.zip or on root@198.18.55.222:/home/awang/QueryVisualization)
 	2) Add a new folder to the HDFS /ghostcache/<tag> where <tag> is the name of the pipeline (ex: DEC, VER, TST)
 		- Ex: Check to see if it succeeded with /a/bin/hadoop dfs -ls /ghostcache/mrg/ where mrg 
-	3) Add all the files in to the folder. (In general they should be space separated, or else you have to edit the table generating code)
+		- NOTE: you can put it in someplace else in the HDFS, you'd just have to remember it in step 4 : LOCATION
+	3) Add all the files in to the folder. (In general they should be space separated, or else you have to edit the table generating code : FIELDS TERMINATED BY ' ')
 	4) Generate the table in Impala in 198.18.55.222 with the following format:
 		DROP TABLE IF EXISTS mrg;
 		CREATE EXTERNAL TABLE mrg
@@ -80,6 +64,74 @@ In query.py
 
 
 
+
+
+
+/************************************************************
+Known bugs/ Issues:
+************************************************************/
+1) If you have a function that runs chart.redraw() and the page freezes or returns a:
+Uncaught RangeError: Maximum call stack size exceeded
+
+This is why:
+http://forum.highcharts.com/viewtopic.php?f=9&t=11442
+
+Temp fix: Disable the navigator.
+Or just sidestep the issue somehow.
+Other solution to look into: http://forum.highcharts.com/highstock-usage/removing-navigator-base-series-t30598/
+
+2) Timestamps are difficult to pin down and debug accurately because they seem to look at different time zones
+	The Highstock charts seem to interpret times in GMT
+
+3) As you move the navigator, it sometimes consolidates large amounts of data in the past to 1 day or 2 day points.
+	chart.series[0].points, as a result, changes as you move the navigator around.chart.
+	chart.series[0].data also disappears periodically, so that's a bummer too
+
+4) Only DEC, TST, and MRG support streaming.
+
+/************************************************************
+I need to connect to a Presto cluster! (this isn't done yet, but hypothetically)
+************************************************************/
+Differnt python modules:
+	1) https://github.com/dropbox/PyHive
+	2) https://github.com/easydatawarehousing/prestoclient
+
+https://groups.google.com/forum/#!searchin/presto-users/http-request/presto-users/A0iJGeeOGKk/irOHchb_NAsJ
+
+import urllib
+import urllib2
+
+headers = {
+	'context-type': 'text/plain',
+	'x-presto-user': 'presto',
+	'x-presto-catalog': 'hive',
+	'x-presto-schema': 'default'
+	}
+url = "http://72.247.233.109:9710/v1/statement"
+data = "show tables"
+request = urllib2.Request(url, data, headers)
+print urllib2.urlopen(request).read()
+
+Got:
+{"id":"20140402_030533_00010_bfj5i","infoUri":"http://10.17.36.40:8080/v1/query/20140402_030533_00010_bfj5i","nextUri":"http://10.17.36.40:8080/v1/statement/20140402_030533_00010_bfj5i/1","stats":{"state":"QUEUED","scheduled":false,"nodes":0,"totalSplits":0,"queuedSplits":0,"runningSplits":0,"completedSplits":0,"userTimeMillis":0,"cpuTimeMillis":0,"wallTimeMillis":0,"processedRows":0,"processedBytes":0}}
+
+
+/************************************************************
+I need to connect to a different Impala cluster!
+************************************************************/
+
+Before you do anything you need to set up the other Impala cluster with access to HDFS:
+	See awang_impala_installation_notes.txt
+
+In tornadoserver.py:
+	Look for 'impala_host_ip_address' and change the variable assignment to the new IP address.
+
+/************************************************************
+I need to listen to a different port than 80!
+************************************************************/
+
+In tornadoserver.py:
+	Look for app.listen(80) and change it to the port you want.
 
 
 

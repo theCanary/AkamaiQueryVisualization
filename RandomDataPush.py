@@ -38,7 +38,8 @@ def create_line_chart_data(feed_name="",stop_counter=False,field_name=""):
 	i = 1
 	while True:
 		i += 1
-		data['data'] = [1435589700000.0 + i*100000000, random.randint(5,1e10)]
+		data['data'] = [1435589700000.0 + 100000000, random.randint(5,1e10)]
+		data['table'] = 'dec'
 		print data
 		r = requests.post("http://198.18.55.222:80/pushdata/",headers=headers,data=json.dumps(data))
 		time.sleep(2)

@@ -31,22 +31,45 @@ function open_websocket(relative_path) {
 	return new WebSocket(new_uri);
 }
 
-var ws = open_websocket("/socket/");
-//TODO: Send a message so that we only listen to stuff we care about! Otherwise we get in trouble when many users are connected
-//This ws onmessage declaration handles all our data types.
-ws.onmessage = function(event) {
-	var res_data = JSON.parse(event.data); //messages are objects, not pure JSON
-	data = [res_data.data];
-    console.log("Streaming data input received : " + data);
+
+// Based on http://stackoverflow.com/questions/12014412/highcharts-getting-y-value-in-one-series-based-on-x-value-from-another-series
+function getPointFromIndex(xValue){
+	var chart = $('#feed_main_chart').highcharts();
+	var points=chart.series[0].data;
+	var point=null;
+	for(var i=0;i<points.length;i++){
+	if(points[i].x==xValue) {
+		console.log(points[i].x, xValue, "ok");
+		point = points[i];
+	}
+	}
+	return point;
+}
+
+
+// Add Point to graph
+function draw_on_graph(data, seriesNum) {
     var chart = $('#feed_main_chart').highcharts();
     for (i = 0; i < data.length; i++) {
-    	console.log(data[i])
-    	console.log("adding point at " + data[i][0]);
-    	chart.series[0].addPoint([data[i][0], data[i][1]], true, false);
+      console.log("received point at " + [data[i][0], data[i][1]]);
+      var point = getPointFromIndex(data[i][0]);
+      if (point == null) {
+        console.log("adding point");
+        newPoint = [data[i][0], data[i][1]];
+        chart.series[seriesNum].addPoint(newPoint);
+        if (seriesNum == 0) {
+        	chart.scroller.series.addPoint(newPoint)
+        }
+      }
+      else {
+        console.log("updating point");
+        var y = point.y;
+        point.update(y += data[i][1]); //, false, true
+      }
     }
 }
 
 //If we don't do this, often the browser will just leave the ws open forever.
-window.addEventListener("beforeunload", function(event) {
-	ws.close();
-});
+// window.addEventListener("beforeunload", function(event) {
+// 	ws.close();
+// });

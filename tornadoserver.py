@@ -329,14 +329,8 @@ class Announcer(BaseQuery2Handler):
 		#we should push something to a socket or not.
 
 		json_data = self.json_args
-		json_type = json_data["type"]
 		print "Announcer received input"
 		print json_data["data"]
-		if json_type.startswith("alerts"):
-			if json_type == "alerts_add":
-				all_alerts.update(json_data["data"])
-			elif json_type == "alerts_remove":
-				all_alerts.remove(json_data["data"][0]) #only 1 in remove requests
 		for socket in ALL_SOCKETS:
 			#if json_data["feed_name"] in socket.wanted_feeds:
 			#TODO: Make sure we actually pass this in...
@@ -355,9 +349,9 @@ def make_application():
 	handlers = [
 		url(r"/socket/", ClientSocket), # TODO
 		url(r"/pushdata/",Announcer), #TODO
-		url(r"/",DashboardHandler), #HomeHandler
-		url(r"/home/",DashboardHandler), # DEC pipeline
-		url(r"/dashboard/",DashboardHandler), # DEC pipeline
+		url(r"/",TSTHandler), #HomeHandler
+		url(r"/home/",TSTHandler), # DEC pipeline
+		url(r"/decstats/",DashboardHandler), # DEC pipeline
 		url(r"/threadstats/",TSTHandler),
 		url(r"/versionstats/",VERHandler),
 		url(r"/sqlstats/",SQLHandler),

@@ -73,7 +73,6 @@ function generate_chart() {
   return {
     chart: {type: 'spline', zoomType: 'x'},
     title: {text: 'Thread CPU Time over Time'},
-    ordinal: false,
     xAxis: {type: 'datetime',
         dateTimeLabelFormats: { // don't display the dummy year
             second: '%b %e',
@@ -83,7 +82,9 @@ function generate_chart() {
             month: '%e. %b',
             year: '%b'
         },
-        title: {text: 'Date'},minRange: 60*1000
+        ordinal: false,
+        title: {text: 'Date'},
+        minRange: 1
     },
     yAxis: { title: { text: 'CPU Time'},
         min: 0,
@@ -134,10 +135,29 @@ function generate_chart() {
         }
     },
     navigator: {
-        enabled: true
+        enabled: true,
+        series: {data: [[1432891800000.0, 19225500.0], [1432896300000.0, 22039600.0], [1432896900000.0, 33764375.0], [1432897200000.0, 23594650.0], [1432897800000.0, 11229750.0], [1432898100000.0, 20486525.0], [1432898400000.0, 26107650.0], [1432898700000.0, 12664625.0], [1432899000000.0, 11427966.666666666], [1432899300000.0, 22590550.0], [1432899600000.0, 7551266.666666667], [1432899900000.0, 19726100.0], [1432900200000.0, 25350550.0], [1432900500000.0, 2367950.0], [1432900800000.0, 1283150.0], [1432901100000.0, 7035250.0], [1432901400000.0, 19546833.333333332], [1432901700000.0, 12058600.0], [1432902000000.0, 8158066.666666667], [1432902300000.0, 13335050.0], [1432902600000.0, 12544966.666666666], [1432902900000.0, 9381500.0], [1432903200000.0, 28693750.0], [1432903500000.0, 12962350.0], [1432903800000.0, 10338875.0], [1432904100000.0, 9550700.0], [1432904400000.0, 32151950.0], [1432904700000.0, 15003350.0], [1432905000000.0, 5916400.0], [1432905300000.0, 15540937.5], [1432905600000.0, 16500005.555555556], [1432905900000.0, 14063858.333333334], [1432906200000.0, 15930614.285714285], [1432906500000.0, 17366730.0], [1432906800000.0, 21593137.5], [1432907100000.0, 26221887.5], [1432907400000.0, 20833316.666666668], [1432907700000.0, 20377666.666666668], [1432908000000.0, 13048296.666666666], [1432908300000.0, 17409785.0], [1432908600000.0, 18024260.714285713], [1432908900000.0, 15834842.105263159], [1432909200000.0, 14424266.666666666], [1432909500000.0, 20340910.0], [1432909800000.0, 13166975.0], [1432910100000.0, 26352450.0], [1432910400000.0, 13955100.0]] }
     },
     legend: {
         enabled: true
+    },
+    rangeSelector: {
+            buttons: [{ //The navigator will start out with this setting
+                type: 'all',
+                text: 'All'
+            },
+            {
+                count: 5,
+                type: 'minute',
+                text: '5M'
+            },
+            {
+                count: 1,
+                type: 'minute',
+                text: '1M'
+            }],
+            inputEnabled: false,
+            selected: 0
     },
     turboThreshold: 0,
     // tooltip: {
@@ -191,14 +211,14 @@ $(function () {
 var colorWheel = 0;
 var submit_query = function(e) {
   var optionNum = ["Page Faults", "Context Switches", "Input/Output Blocks", "CPU Time", "RSS Memory"].indexOf($('#option').val());
-  var args = {
+  var page_args = {
     table: 'tst',
     a: $('#spanNames').val()[0],
     b: $('#domainNames').val()[0],
     c: $('#threadNames').val()[0],
     option: optionNum.toString()
   };
-  args = $.param(args);
+  args = $.param(page_args);
   console.log(args);
   $.getJSON('/_make_query', args, function(data) {
         response = initial_main_feed;
@@ -229,6 +249,34 @@ var submit_query = function(e) {
         chart.title.attr({text: 'Thread ' + $('#option').val() + " over Time"});
         chart.yAxis[0].axisTitle.attr({text: $('#option').val()});
         //drawFlags();
+  });
+
+  // Open a socket to listen for any updates
+  var tstws = open_websocket("/socket/");
+  console.log("socket opened");
+  tstws.onmessage = function(event) {
+        var data = JSON.parse(event.data); //messages are objects, not pure JSON
+
+        console.log("Streaming data input received : " + data.data[0]);
+        if (data.table == 'tst') {
+          console.log("table is : " + data.table);
+          if ((data.span == page_args['a'] ||  page_args['a']=="ALL") &&
+              (data.domain == page_args['b'] ||  page_args['b']=="ALL") &&
+              ((data.thread.indexOf(page_args['c']) > -1) ||  page_args['c']=="ALL")) {
+            point = data.data[optionNum];
+            console.log(point, "point");
+            if (optionNum < 3) {
+              draw_on_graph([[point[0], point[1]]],0); //[data.data]
+              draw_on_graph([[point[0], point[2]]],1);
+            } else {
+              draw_on_graph(point,0);
+            }
+          }
+        }
+
+  }
+  window.addEventListener("beforeunload", function(event) {
+    tstws.close();
   });
   return false;
 };
